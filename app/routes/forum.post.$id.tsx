@@ -3,7 +3,7 @@ import { useState } from "react";
 import type { Route } from "./+types/forum.post.$id";
 import { ArrowLeft, Eye, Heart, Pin } from "lucide-react";
 import { marked } from "marked";
-import { apiGet } from "~/lib/api.server";
+import { forumGet } from "~/lib/api.server";
 import type { RawComment, RawPost } from "~/lib/types";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -25,8 +25,8 @@ export async function loader({ params, request }: Route.LoaderArgs) {
   const sort = SORT_MAP[url.searchParams.get("sort") || "hot"] || SORT_MAP.hot;
   try {
     const [post, comments] = await Promise.all([
-      apiGet<RawPost>(`/api/posts/${params.id}`),
-      apiGet<RawComment[]>(
+      forumGet<RawPost>(`/api/posts/${params.id}`),
+      forumGet<RawComment[]>(
         `/api/posts/${params.id}/comments?sort_by=${sort.sort_by}&sort_dir=${sort.sort_dir}`
       ),
     ]);

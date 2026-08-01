@@ -1,7 +1,7 @@
 import { Form, Link } from "react-router";
 import type { Route } from "./+types/posts._index";
 import { Rss, Search, Pin, Eye, Newspaper } from "lucide-react";
-import { apiGet } from "~/lib/api.server";
+import { blogGet } from "~/lib/api.server";
 import type { BlogPostListItem } from "~/lib/types";
 import { Pagination } from "~/components/Pagination";
 
@@ -19,7 +19,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   const q = (url.searchParams.get("q") || "").trim();
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
 
-  const all = await apiGet<BlogPostListItem[]>("/api/blog/posts");
+  const all = await blogGet<BlogPostListItem[]>("/api/blog/posts");
   const filtered = q
     ? all.filter(
         (p) =>

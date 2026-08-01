@@ -1,7 +1,7 @@
 import { Form, Link } from "react-router";
 import type { Route } from "./+types/forum._index";
 import { Search, Eye, Heart, MessageSquare, Pin, LogIn } from "lucide-react";
-import { apiGet } from "~/lib/api.server";
+import { forumGet } from "~/lib/api.server";
 import type { Category, RawPost } from "~/lib/types";
 import { Pagination } from "~/components/Pagination";
 
@@ -30,8 +30,8 @@ export async function loader({ request }: Route.LoaderArgs) {
   if (categoryId) params.set("category_id", categoryId);
 
   const [data, categories] = await Promise.all([
-    apiGet<{ posts: RawPost[]; total: number }>(`/api/posts?${params}`),
-    apiGet<Category[]>("/api/categories"),
+    forumGet<{ posts: RawPost[]; total: number }>(`/api/posts?${params}`),
+    forumGet<Category[]>("/api/categories"),
   ]);
 
   return {

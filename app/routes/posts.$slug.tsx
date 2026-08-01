@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import type { Route } from "./+types/posts.$slug";
 import { ArrowLeft, CalendarDays, Eye } from "lucide-react";
 import { marked } from "marked";
-import { apiGet } from "~/lib/api.server";
+import { blogGet } from "~/lib/api.server";
 import type { BlogPost } from "~/lib/types";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -15,7 +15,7 @@ export function meta({ loaderData }: Route.MetaArgs) {
 
 export async function loader({ params }: Route.LoaderArgs) {
   try {
-    const post = await apiGet<BlogPost>(`/api/blog/posts/${params.slug}`);
+    const post = await blogGet<BlogPost>(`/api/blog/posts/${params.slug}`);
     return { post };
   } catch {
     throw new Response("文章不存在", { status: 404 });

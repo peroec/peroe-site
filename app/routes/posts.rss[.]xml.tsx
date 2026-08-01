@@ -1,5 +1,5 @@
 import type { Route } from "./+types/posts.rss[.]xml";
-import { apiGet } from "~/lib/api.server";
+import { blogGet } from "~/lib/api.server";
 import type { BlogPostListItem } from "~/lib/types";
 
 function escapeXml(s: string) {
@@ -13,7 +13,7 @@ function escapeXml(s: string) {
 
 export async function loader({ request }: Route.LoaderArgs) {
   const origin = new URL(request.url).origin;
-  const posts = await apiGet<BlogPostListItem[]>("/api/blog/posts");
+  const posts = await blogGet<BlogPostListItem[]>("/api/blog/posts");
 
   const items = posts
     .map(
