@@ -38,7 +38,9 @@ function LoginForm() {
       try {
         const u = new URL(target);
         if (u.origin !== window.location.origin) {
-          u.searchParams.set('token', token);
+          // 外域跳转不带 token：redirect 参数可被攻击者伪造，
+          // 若把登录凭证拼进外部 URL，钓鱼场景下 token 会泄露给第三方。
+          // 外域本来就不是本站正常回跳场景，直接裸跳（用户确认弹窗保留）。
           setExternalUrl(u.toString());
           setExternalConfirmOpen(true);
           return;
