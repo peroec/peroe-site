@@ -12,7 +12,11 @@ import {
   BookOpen,
   MessageSquare,
   PenTool,
-  Sparkles,
+  GitBranch,
+  Heart,
+  MessageCircle,
+  Send,
+  Video,
 } from "lucide-react";
 import {
   SITE_AVATAR,
@@ -24,7 +28,7 @@ import {
 
 export function meta() {
   return [
-    { title: "《二叉树树》官方网站" },
+    { title: "《peroe》官方网站" },
     { name: "description", content: SITE_DESCRIPTION },
   ];
 }
@@ -59,11 +63,17 @@ export default function Index() {
       {/* ── Hero ── */}
       <section className="relative flex min-h-[calc(100vh-3.5rem)] flex-col items-center justify-center px-4 text-center">
         <div className="rounded-md border-2 border-accent/70 p-1.5">
-          <img
-            src={SITE_AVATAR}
-            alt={SITE_NAME}
-            className="h-28 w-28 rounded-sm object-cover sm:h-36 sm:w-36"
-          />
+          {SITE_AVATAR ? (
+            <img
+              src={SITE_AVATAR}
+              alt={SITE_NAME}
+              className="h-28 w-28 rounded-sm object-cover sm:h-36 sm:w-36"
+            />
+          ) : (
+            <span className="flex h-28 w-28 items-center justify-center rounded-sm text-6xl font-bold text-white sm:h-36 sm:w-36">
+              {SITE_NAME.charAt(0).toUpperCase()}
+            </span>
+          )}
         </div>
         <h1 className="mt-8 text-5xl font-bold tracking-tight text-white sm:text-6xl">
           {SITE_NAME}
@@ -73,8 +83,6 @@ export default function Index() {
           <BookOpen className="h-4 w-4" /> 技术博客
           <span className="text-border">·</span>
           <MessageSquare className="h-4 w-4" /> 社区论坛
-          <span className="text-border">·</span>
-          <Sparkles className="h-4 w-4" /> AI 工具
           <span className="text-border">·</span>
           <Briefcase className="h-4 w-4" /> 实用在线工具集
         </p>
@@ -179,7 +187,7 @@ export default function Index() {
           <h2 className="mb-8 text-2xl font-bold text-white">关于我们</h2>
           <div className="space-y-5 text-sm leading-loose text-muted">
             <p>
-              你好，我是<strong className="text-white">二叉树树</strong>
+              你好，我是<strong className="text-white">peroe</strong>
               ，这个站点的创意提供者。我不是程序员——这里的所有代码、功能与设计，都由
               <strong className="text-white">大语言模型（LLM）</strong>（Claude /
               ChatGPT / Gemini / Grok / GLM / MiniMax / Qwen / DeepSeek）完成。
@@ -209,22 +217,37 @@ export default function Index() {
       </section>
 
       {/* ── 关注 & 联系 ── */}
-      <section className="border-t border-border">
-        <div className="mx-auto max-w-3xl px-4 py-20 text-center">
-          <h2 className="mb-2 text-2xl font-bold text-white">关注 & 联系</h2>
+      <section className="border-t border-border/40 bg-muted/20 px-4 py-20">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="mb-2 text-2xl font-bold tracking-tight text-white">关注 & 联系</h2>
           <p className="mb-8 text-sm text-muted">在这些平台上找到我</p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {SOCIAL_LINKS.map((s) => (
-              <a
-                key={s.label}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded border border-border px-5 py-2 text-sm text-muted transition-colors hover:bg-card hover:text-white"
-              >
-                {s.label}
-              </a>
-            ))}
+          <div className="flex flex-wrap justify-center gap-3">
+            {SOCIAL_LINKS.map((s) => {
+              const Icon =
+                s.icon === "github"
+                  ? GitBranch
+                  : s.icon === "video"
+                    ? Video
+                    : s.icon === "message"
+                      ? MessageCircle
+                      : s.icon === "send"
+                        ? Send
+                        : s.icon === "rss"
+                          ? Rss
+                          : Heart;
+              return (
+                <a
+                  key={s.label}
+                  href={s.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded border border-border px-4 py-2 text-sm text-muted transition-colors hover:border-foreground hover:bg-foreground hover:text-background"
+                >
+                  <Icon className="h-4 w-4" aria-hidden="true" />
+                  <span>{s.label}</span>
+                </a>
+              );
+            })}
           </div>
         </div>
       </section>

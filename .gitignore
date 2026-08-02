@@ -19,3 +19,5 @@ dist/
 *.log
 
 .DS_Store
+
+# Serena 工具状态（本地）.serena/

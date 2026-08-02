@@ -3,7 +3,7 @@ import type { Route } from "./+types/tools.watermark";
 
 export function meta() {
   return [
-    { title: "图片加水印工具 | 二叉树树" },
+    { title: "图片加水印工具 | peroe" },
     { name: "description", content: "在线为图片添加文字或图片水印" },
   ];
 }

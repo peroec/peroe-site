@@ -34,14 +34,20 @@ export function Header() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
+    <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <img
-            src={SITE_AVATAR}
-            alt="logo"
-            className="h-8 w-8 rounded-sm border border-border object-cover"
-          />
+        <Link to="/" reloadDocument className="flex items-center gap-2">
+          {SITE_AVATAR ? (
+            <img
+              src={SITE_AVATAR}
+              alt="logo"
+              className="h-8 w-8 rounded-sm border border-border object-cover"
+            />
+          ) : (
+            <span className="flex h-8 w-8 items-center justify-center rounded-sm border border-border text-sm font-bold text-white">
+              {SITE_NAME.charAt(0).toUpperCase()}
+            </span>
+          )}
           <span className="text-base font-bold text-white">{SITE_NAME}</span>
         </Link>
 

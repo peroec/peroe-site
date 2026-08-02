@@ -11,6 +11,19 @@
   --color-muted: #a3a3a3;
   --color-muted-2: #737373;
   --color-accent: #e11d48;
+  /* 论坛（forum-bbs）所需，原 2xss_bbs 主题变量 */
+  --color-primary: #ededed;
+  --color-primary-foreground: #171717;
+  --color-secondary: #262626;
+  --color-secondary-foreground: #ededed;
+  --color-muted-foreground: #a3a3a3;
+  --color-card-foreground: #ededed;
+  --color-popover: #141414;
+  --color-popover-foreground: #ededed;
+  --color-input: #262626;
+  --color-ring: #404040;
+  --color-destructive: #ef4444;
+  --color-accent-foreground: #ededed;
 }
 
 /* 全站直角风格（对齐目标站 2x.nz：无圆角） */
@@ -35,10 +48,30 @@ body {
 
 /* markdown 正文样式 */
 .prose-dark {
-  line-height: 1.8;
+  max-width: none;
+  font-size: 1rem;
+  line-height: 1.85;
   color: #d4d4d4;
   word-break: break-word;
 }
+.prose-dark h2,
+.prose-dark h3 {
+  scroll-margin-top: 5rem;
+}
+.prose-dark strong { color: #fff; font-weight: 700; }
+.prose-dark em { color: #e5e5e5; }
+.prose-dark del { color: #737373; }
+.prose-dark .hljs-keyword,
+.prose-dark .hljs-selector-tag,
+.prose-dark .hljs-literal,
+.prose-dark .hljs-type { color: #cba6f7; }
+.prose-dark .hljs-string,
+.prose-dark .hljs-attr,
+.prose-dark .hljs-symbol { color: #a6e3a1; }
+.prose-dark .hljs-title,
+.prose-dark .hljs-title.function_ { color: #89b4fa; }
+.prose-dark .hljs-comment { color: #6c7086; }
+.prose-dark .hljs-number { color: #fab387; }
 .prose-dark h1,
 .prose-dark h2,
 .prose-dark h3,
@@ -155,6 +188,8 @@ body {
   transition: color 0.15s;
 }
 .prose-dark .code-block .code-copy:hover { color: #ededed; }
+.prose-dark .code-copy-label { margin-left: 4px; font-size: 0.7rem; color: #a1a1b0; }
+.prose-dark .code-copy.copied .code-copy-label { color: #4ade80; }
 .prose-dark .code-block .code-icon { width: 14px; height: 14px; }
 .prose-dark .code-block .code-icon-copied { display: none; }
 .prose-dark .code-block .code-copy.copied .code-icon-copy { display: none; }

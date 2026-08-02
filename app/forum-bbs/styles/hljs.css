@@ -1,0 +1,172 @@
+/* 滚动条样式统一由 globals.css 定义（方形、中灰高对比） */
+
+/* 正文宽表格：在自身盒内横向滚动，绝不撑破页面（窄屏防溢出/裁切）。
+   display:block + width:max-content + max-width:100% 让表格按内容自然展开，
+   但被容器宽度封顶后转为内部滚动，而非把 <main>/页面推出横向滚动条。 */
+.prose table {
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+}
+/* 长代码块同理，已在下方 .hljs 处理 overflow；此处补 pre 兜底 */
+.prose pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* highlight.js: Atom One Dark for prose code blocks */
+.prose .hljs {
+  color: #abb2bf;
+  background: #1e1e2e;
+}
+/* One Dark 原版注释色是 #5c6370，在 #1e1e2e 底上只有 2.8:1，达不到 AA。
+   提亮到 #868c96（4.9:1），仍保持"注释比正文暗"的层次 */
+.prose .hljs-comment,
+.prose .hljs-quote {
+  color: #868c96;
+  font-style: italic;
+}
+.prose .hljs-doctag,
+.prose .hljs-keyword,
+.prose .hljs-formula {
+  color: #c678dd;
+}
+.prose .hljs-section,
+.prose .hljs-name,
+.prose .hljs-selector-tag,
+.prose .hljs-deletion,
+.prose .hljs-subst {
+  color: #e06c75;
+}
+.prose .hljs-literal {
+  color: #56b6c2;
+}
+.prose .hljs-string,
+.prose .hljs-regexp,
+.prose .hljs-addition,
+.prose .hljs-attribute,
+.prose .hljs-meta .hljs-string {
+  color: #98c379;
+}
+.prose .hljs-attr,
+.prose .hljs-variable,
+.prose .hljs-template-variable,
+.prose .hljs-type,
+.prose .hljs-selector-class,
+.prose .hljs-selector-attr,
+.prose .hljs-selector-pseudo,
+.prose .hljs-number {
+  color: #d19a66;
+}
+.prose .hljs-symbol,
+.prose .hljs-bullet,
+.prose .hljs-link,
+.prose .hljs-meta,
+.prose .hljs-selector-id,
+.prose .hljs-title {
+  color: #61aeee;
+}
+.prose .hljs-built_in,
+.prose .hljs-title.class_,
+.prose .hljs-class .hljs-title {
+  color: #e6c07b;
+}
+.prose .hljs-emphasis {
+  font-style: italic;
+}
+.prose .hljs-strong {
+  font-weight: bold;
+}
+.prose .hljs-link {
+  text-decoration: underline;
+}
+
+/* Callout / admonition blocks */
+.prose .callout {
+  margin: 1.25em 0;
+  padding: 0.75em 1em;
+  border-radius: 0;
+  border-left: 4px solid;
+}
+.prose .callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font-weight: 600;
+  font-size: 0.9em;
+  margin-bottom: 0.4em;
+}
+.prose .callout-icon {
+  line-height: 1;
+}
+.prose .callout-svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+}
+.prose .callout :first-child {
+  margin-top: 0;
+}
+.prose .callout :last-child {
+  margin-bottom: 0;
+}
+.prose .callout p {
+  margin: 0.3em 0;
+}
+
+/* Warning */
+.prose .callout-warning {
+  background: color-mix(in srgb, #d19a66 10%, transparent);
+  border-color: #d19a66;
+}
+.prose .callout-warning .callout-title {
+  color: #d19a66;
+}
+
+/* Tip */
+.prose .callout-tip {
+  background: color-mix(in srgb, #98c379 10%, transparent);
+  border-color: #98c379;
+}
+.prose .callout-tip .callout-title {
+  color: #98c379;
+}
+
+/* Info / Note */
+.prose .callout-info,
+.prose .callout-note {
+  background: color-mix(in srgb, #61aeee 10%, transparent);
+  border-color: #61aeee;
+}
+.prose .callout-info .callout-title,
+.prose .callout-note .callout-title {
+  color: #61aeee;
+}
+
+/* Caution */
+.prose .callout-caution {
+  background: color-mix(in srgb, #e06c75 10%, transparent);
+  border-color: #e06c75;
+}
+.prose .callout-caution .callout-title {
+  color: #e06c75;
+}
+
+/* Danger */
+.prose .callout-danger {
+  background: color-mix(in srgb, #e06c75 15%, transparent);
+  border-color: #e06c75;
+}
+.prose .callout-danger .callout-title {
+  color: #e06c75;
+}
+
+/* Important */
+.prose .callout-important {
+  background: color-mix(in srgb, #c678dd 10%, transparent);
+  border-color: #c678dd;
+}
+.prose .callout-important .callout-title {
+  color: #c678dd;
+}

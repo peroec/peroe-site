@@ -22,6 +22,6 @@
     "resolveJsonModule": true,
     "allowImportingTsExtensions": false,
     "rootDirs": [".", "./.react-router/types"],
-    "paths": { "~/*": ["./app/*"] }
+    "paths": { "~/*": ["./app/*"], "@/*": ["./app/*"] }
   }
 }

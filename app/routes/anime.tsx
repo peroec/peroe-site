@@ -3,7 +3,7 @@ import type { AnimeItem } from "~/lib/types";
 
 export function meta() {
   return [
-    { title: "追番列表 | 二叉树树" },
+    { title: "追番列表 | peroe" },
     { name: "description", content: "同步个人 Bangumi 追番列表" },
   ];
 }

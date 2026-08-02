@@ -3,7 +3,7 @@ import type { Route } from "./+types/tools.cover";
 
 export function meta() {
   return [
-    { title: "视频封面制作工具 | 二叉树树" },
+    { title: "视频封面制作工具 | peroe" },
     { name: "description", content: "在线生成精美的封面图片" },
   ];
 }

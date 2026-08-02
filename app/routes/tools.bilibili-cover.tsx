@@ -4,7 +4,7 @@ import { Download, Loader2, Search, Tv } from "lucide-react";
 
 export function meta() {
   return [
-    { title: "B站封面下载工具 | 二叉树树" },
+    { title: "B站封面下载工具 | peroe" },
     { name: "description", content: "输入 B 站视频链接或 BV 号，一键下载视频封面" },
   ];
 }

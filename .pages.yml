@@ -1,0 +1,107 @@
+# Pages CMS 配置 —— https://pagescms.org/docs/
+#
+# 用法：到 https://app.pagescms.org/ 登录 GitHub，连接 afoim/2xss_blog，
+# 之后在浏览器里就能新建/编辑文章。保存即 commit 到 edit 分支（默认分支），
+# 没有 CI 监听它；改完后点侧边栏的「部署到线上」，
+# GitHub Actions 会构建并把产物推到 main 分支，CDN 从 main 取用发布。
+#
+# ⚠ 重要：Pages CMS 保存时只会写回下面 fields 里声明过的字段，
+#   frontmatter 中未声明的键会被静默丢弃。新增 frontmatter 字段时，
+#   记得同时改这里和 source.config.ts 的 zod schema。
+
+media:
+  # 图片库：1275 张历史图片从 eleventy-blog-pagescms 的 img/ 迁过来，
+  # public/ 下的内容会被原样发布到站点根，所以站内路径就是 /img/<文件名>
+  input: public/img
+  output: /img
+  categories: [image, video]
+  # 上传时清理文件名，避免中文/空格进 URL
+  rename: safe
+
+content:
+  - name: posts
+    label: 文章
+    type: collection
+    path: content
+    format: yaml-frontmatter
+    filename:
+      # 文件名就是文章 URL（/posts/<文件名>），标题是中文没法自动转 slug，
+      # 所以这里始终把文件名暴露成可编辑字段，手动填英文 slug。
+      template: "{primary}.mdx"
+      field: true
+    view:
+      fields: [title, date, draft, pin]
+      primary: title
+      sort: [date, title]
+      search: [title, description, tags]
+      default:
+        sort: date
+        order: desc
+    fields:
+      - name: title
+        label: 标题
+        type: string
+        required: true
+
+      - name: description
+        label: 摘要
+        type: text
+        description: 显示在首页卡片上，同时用作搜索引擎和社交分享的描述
+        required: true
+
+      - name: date
+        label: 发布日期
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+
+      - name: coverImage
+        label: 封面图
+        # image 字段带图片库选择器和上传按钮；存回 frontmatter 的是
+        # media.output 前缀的站内路径（/img/xxx.webp），正是站点期望的形式
+        type: image
+        description: 从图片库选择，或直接上传新图；留空则首页卡片显示渐变占位块
+
+      - name: tags
+        label: 标签
+        type: string
+        list: true
+
+      - name: draft
+        label: 草稿
+        type: boolean
+        default: false
+        description: 勾选后不会被构建，线上无法访问
+
+      - name: pin
+        label: 置顶
+        type: boolean
+        default: false
+        description: 置顶到首页第一位，卡片上会显示「置顶」徽章
+
+      - name: body
+        label: 正文
+        # 富文本编辑器，支持粘贴/拖拽图片（code 字段没有粘贴处理器）。
+        # 自带 WYSIWYG / 源码双模式切换。
+        #
+        # 注意：只有在 WYSIWYG 里实际编辑过正文，保存时才会重新序列化整篇
+        # markdown；只改 frontmatter 的话正文字节不变。以下 12 篇含裸 HTML
+        # 或 MDX import/export，往返可能丢内容，建议只在源码模式下编辑：
+        #   avatar / browser-run-js / cf-randompic / jkw / nat1-web
+        #   astrov3-redirects / gh-proxy / hack-lskypro / hugo
+        #   improve-dev-speed / svaf-next-seo / vercel-deny
+        type: rich-text
+
+# 侧边栏按钮：触发 GitHub Actions
+actions:
+  - name: deploy
+    label: 部署到线上
+    # 对应 .github/workflows/release.yml，它把 edit 强制覆盖到 main
+    workflow: release.yml
+    # 从 edit 分支读取 workflow 定义（省略时取当前浏览的分支）
+    ref: edit
+    confirm:
+      title: 确认部署？
+      message: 将在 GitHub Actions 里构建当前 edit 分支，并把产物推送到 main 分支供 CDN 发布。约需数分钟。
+      button: 部署

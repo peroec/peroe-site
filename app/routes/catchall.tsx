@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { Wrench } from "lucide-react";
 
 export function meta() {
-  return [{ title: "页面不存在 | 二叉树树" }];
+  return [{ title: "页面不存在 | peroe" }];
 }
 
 export default function CatchAll() {
@@ -12,6 +12,7 @@ export default function CatchAll() {
       <h1 className="mt-4 text-xl font-bold text-white">页面不存在</h1>
       <Link
         to="/"
+        reloadDocument
         className="mt-8 rounded border border-border px-5 py-2 text-sm text-muted hover:text-white"
       >
         返回首页

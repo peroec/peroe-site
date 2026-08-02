@@ -3,7 +3,7 @@ import type { Sponsor } from "~/lib/types";
 
 export function meta() {
   return [
-    { title: "赞助鸣谢 | 二叉树树" },
+    { title: "赞助鸣谢 | peroe" },
     { name: "description", content: "感谢您的支持，您的赞助将帮助我持续创作优质内容" },
   ];
 }

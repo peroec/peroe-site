@@ -1,0 +1,7 @@
+- 页面路由文件位于 app/routes，使用 Route 类型生成文件 `./+types/...`。
+- 站点常量集中在 app/lib/site.ts：品牌、HOME_URL、FORUM_API_BASE_URL、ANALYTICS、TOOL_ITEMS。
+- 论坛请求使用 app/lib/api.server.ts 的 forumGet/forumPost；博客不要再依赖 blog-api，读取 generatedPosts。
+- 所有博客 frontmatter 通过 .pages.yml 管理；不要手改 generated-posts.ts，它由 scripts/generate-posts.mjs 生成。
+- 文章 Markdown 用 app/lib/markdown.ts，已有 callout、标题锚点、代码块复制、图片 lightbox；文章详情用 ArticleTableOfContents 生成桌面右侧目录和移动端浮动目录。
+- 代码风格偏直角/细边框/深色 UI；空头像必须首字母占位，不能渲染 src=""。
+- 社交联系方式配置在 SOCIAL_LINKS，首页图标由 icon key 映射 lucide 图标。

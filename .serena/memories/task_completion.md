@@ -1,0 +1,1 @@
+完成 main-site 任务至少执行：`pnpm run typecheck`、`pnpm build`；若部署任务要求，设置 Cloudflare token 后 `wrangler deploy`，再用 curl/Invoke-WebRequest 验证首页、文章页、论坛、RSS 和新增工具页。博客文章重点验证 callout、code-copy、封面图和目录组件；不要在未明确要求时 git push。

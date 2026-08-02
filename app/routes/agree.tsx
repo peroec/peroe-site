@@ -1,5 +1,5 @@
 export function meta() {
-  return [{ title: "用户协议 | 二叉树树" }];
+  return [{ title: "用户协议 | peroe" }];
 }
 
 export default function Agree() {

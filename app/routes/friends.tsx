@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router";
 
 export function meta() {
   return [
-    { title: "友情链接 | 二叉树树" },
+    { title: "友情链接 | peroe" },
     { name: "description", content: "这里是我的朋友们，欢迎互相访问交流" },
   ];
 }

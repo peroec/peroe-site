@@ -1,0 +1,1 @@
+main-site 是 React Router v8 Framework Mode 全站 SSR 大前端，目录核心为 app/routes、app/components、app/lib、workers/app.ts、content/*.mdx。论坛 SSR/loader 统一回源 https://forum.060730.xyz；博客文章由 content/*.mdx 提供，PagesCMS 配置在 .pages.yml。Cloudflare Worker 名 peroe-main；EdgeOne 兼容目标。部署前运行 typecheck/build，当前不默认 Git push。相关技术细节见 `mem:tech_stack`，命令见 `mem:suggested_commands`，完成检查见 `mem:task_completion`。

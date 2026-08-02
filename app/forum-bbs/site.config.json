@@ -1,0 +1,16 @@
+{
+  "name": "peroe",
+  "homeUrl": "https://hub.060730.xyz",
+  "title": "peroe 论坛",
+  "description": "peroe 论坛：技术交流与闲聊灌水社区，支持 Markdown 发帖、评论与点赞，欢迎注册加入讨论。",
+  "slogan": "Protect What You Love.",
+  "avatar": "",
+  "url": "https://bbs.060730.xyz",
+  "ogImage": "",
+  "keywords": ["peroe", "论坛", "社区"],
+  "analytics": {
+    "src": "",
+    "websiteId": ""
+  },
+  "authAllowedOrigins": "https://bbs.060730.xyz"
+}

@@ -1,5 +1,5 @@
 export function meta() {
-  return [{ title: "隐私政策 | 二叉树树" }];
+  return [{ title: "隐私政策 | peroe" }];
 }
 
 export default function Privacy() {

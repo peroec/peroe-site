@@ -1,16 +1,15 @@
 import { Form, Link } from "react-router";
 import type { Route } from "./+types/posts._index";
 import { Rss, Search, Pin, Eye, Newspaper } from "lucide-react";
-import { blogGet } from "~/lib/api.server";
-import type { BlogPostListItem } from "~/lib/types";
+import { getPosts, searchPosts } from "~/lib/posts.server";
 import { Pagination } from "~/components/Pagination";
 
 const PAGE_SIZE = 20;
 
 export function meta() {
   return [
-    { title: "博客文章 | 二叉树树" },
-    { name: "description", content: "二叉树树的技术博客文章列表" },
+    { title: "博客文章 | peroe" },
+    { name: "description", content: "peroe 的技术博客文章列表" },
   ];
 }
 
@@ -19,19 +18,11 @@ export async function loader({ request }: Route.LoaderArgs) {
   const q = (url.searchParams.get("q") || "").trim();
   const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
 
-  const all = await blogGet<BlogPostListItem[]>("/api/blog/posts");
-  const filtered = q
-    ? all.filter(
-        (p) =>
-          p.title.toLowerCase().includes(q.toLowerCase()) ||
-          (p.description || "").toLowerCase().includes(q.toLowerCase())
-      )
-    : all;
+  const all = q ? searchPosts(q) : getPosts();
+  const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+  const items = all.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const items = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  return { items, q, page, totalPages, total: filtered.length };
+  return { items, q, page, totalPages, total: all.length };
 }
 
 function formatDate(date: string) {

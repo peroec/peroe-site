@@ -1,0 +1,5 @@
+- React Router 8.3 Framework Mode，SSR=true。
+- React 19、Vite 8、TypeScript、Tailwind CSS v4、lucide-react、marked。
+- Cloudflare：@cloudflare/vite-plugin + workers/app.ts + entry.server.tsx，SSR 必须使用 react-dom/server 的 renderToReadableStream；wrangler.jsonc main=workers/app.ts，assets=build/client，nodejs_compat。
+- 博客内容：PagesCMS 管理 YAML frontmatter MDX；scripts/generate-posts.mjs 在构建前生成 app/lib/generated-posts.ts，Workers 不依赖运行时文件系统。
+- EdgeOne 计划：React Router adapter 可接入，但当前已验证的是 Cloudflare Workers。

@@ -10,7 +10,7 @@ import type { Route } from "./+types/root";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import { CookieBanner } from "~/components/CookieBanner";
-import { SITE_TITLE } from "~/lib/site";
+import { SITE_TITLE, ANALYTICS } from "~/lib/site";
 import "./app.css";
 
 export const links: Route.LinksFunction = () => [
@@ -25,9 +25,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        {/* 统计脚本：site.ts 的 ANALYTICS.src 非空才注入（umami 等） */}
+        {ANALYTICS.src && (
+          <script
+            defer
+            src={ANALYTICS.src}
+            data-website-id={ANALYTICS.websiteId}
+          />
+        )}
       </head>
       <body>
-        {children}
+        <div className="min-h-screen pt-14">
+          {children}
+        </div>
         <ScrollRestoration />
         <Scripts />
       </body>
