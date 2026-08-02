@@ -91,7 +91,10 @@ const ext = marked.use({
       const raw = tokens.map((t: any) => t.text || "").join("");
       const id = slugify(raw);
       const size = depth === 1 ? "text-3xl" : depth === 2 ? "text-2xl" : "text-xl";
-      return `<h${depth} id="${id}" class="${size} font-bold text-white mt-10 mb-4 leading-snug">${text}</h${depth}>`;
+      // 用 tokens 重新渲染而非直接用 text：反引号代码（如 `<noscript>`）内的
+      // 尖括号必须转义为实体，直接拼接 text 会把裸 HTML 标签打进标题（ISSUES #119）
+      const safeText = this.parser.parseInline(tokens as any);
+      return `<h${depth} id="${id}" class="${size} font-bold text-white mt-10 mb-4 leading-snug">${safeText}</h${depth}>`;
     },
     code({ text, lang }: any) {
       const language = typeof lang === "string" && hljs.getLanguage(lang) ? lang : "plaintext";
