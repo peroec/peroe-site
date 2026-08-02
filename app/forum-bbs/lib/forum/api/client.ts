@@ -39,9 +39,14 @@ export function getBaseUrl(): string {
   if (typeof window === 'undefined') return FORUM_API_BASE_URLS.prod;
   try {
     const saved = localStorage.getItem('forum-api-base-url');
-    // 只接受 https 且非本机/原作者地址；本地残留（127.0.0.1/localhost/http）
-    // 和原作者域（i.2x.nz）一律忽略，避免缝合进大前端后误打错后端
-    if (saved && /^https:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0)(?!i\.2x\.nz)([^/]+)/.test(saved)) return saved;
+    if (!saved) return FORUM_API_BASE_URLS.prod;
+    // 显式处于 dev 环境（EnvironmentSwitcher 切到「开发」）时，
+    // 放行本地 http 调试地址（127.0.0.1/localhost），否则 dev 切换会白切。
+    const env = localStorage.getItem('forum-api-env');
+    if (env === 'dev' && /^http:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?\//.test(saved + '/')) return saved;
+    // 非 dev：只接受 https 且非本机/原作者地址；本地残留与 i.2x.nz 一律忽略，
+    // 避免缝合进大前端后误打错后端
+    if (/^https:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0)(?!i\.2x\.nz)([^/]+)/.test(saved)) return saved;
   } catch {}
   return FORUM_API_BASE_URLS.prod;
 }
