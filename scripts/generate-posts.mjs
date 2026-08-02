@@ -22,7 +22,7 @@ function parseFrontmatter(raw) {
     const kv = line.match(/^(\w+):\s*(.*)$/);
     if (!kv) continue;
     const key = kv[1];
-    let value = kv[2].trim().replace(/^"|"$/g, "");
+    let value = kv[2].trim().replace(/^["']|["']$/g, "");
     if (key === "tags") {
       const tags = [];
       for (let j = i; j < lines.length; j++) {
@@ -49,7 +49,10 @@ for (const f of files) {
     title: String(meta.title || f),
     description: String(meta.description || ""),
     coverImage: String(meta.coverImage || meta.thumbnail || ""),
-    date: String(meta.date || "2026-01-01").slice(0, 10),
+    date: (() => {
+      const d = String(meta.date || "2026-01-01").trim();
+      return /^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10) : "2026-01-01";
+    })(),
     pin: meta.pin === true || meta.pin === "true" ? 1 : 0,
     tags: Array.isArray(meta.tags) ? meta.tags : [],
     content: body,

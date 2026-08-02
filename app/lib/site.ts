@@ -28,6 +28,12 @@ export const FORUM_SITE_URL: string = rawConfig.forumSiteUrl;
 /** 工具箱文件索引服务 */
 export const FILES_BASE_URL: string = rawConfig.filesBaseUrl;
 
+/** 友链/赞助数据服务（af_friends-data 部署的静态 JSON） */
+export const FAS_ORIGIN: string = rawConfig.fasOrigin;
+
+/** 友链数据仓库地址（申请友链指向） */
+export const FAS_REPO: string = rawConfig.fasRepo;
+
 /** 统计脚本（umami 等）：src 非空才注入 index.html；websiteId 为 data-website-id */
 export const ANALYTICS: { src: string; websiteId: string } = rawConfig.analytics;
 

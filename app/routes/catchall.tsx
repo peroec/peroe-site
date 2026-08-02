@@ -1,8 +1,13 @@
 import { Link } from "react-router";
-import { Wrench } from "lucide-react";
+import type { Route } from "./+types/catchall";
 
 export function meta() {
   return [{ title: "页面不存在 | peroe" }];
+}
+
+// 未知路径返回真 404（而非 200+404 页面），避免搜索引擎收录垃圾 URL
+export function loader(_: Route.LoaderArgs) {
+  throw new Response(null, { status: 404, statusText: "Not Found" });
 }
 
 export default function CatchAll() {

@@ -578,7 +578,7 @@ export function PostContent({
           </div>
         ) : (
           <div className="mb-6 -mx-4 px-4 py-4 bg-muted/50 text-center text-sm text-muted-foreground sm:mx-0">
-            <Link to={`/auth/login?redirect=/post/${id}`} className="text-primary hover:underline">
+            <Link to={`/forum/auth/login?redirect=/post/${id}`} className="text-primary hover:underline">
               登录
             </Link>
             {' '}后即可评论

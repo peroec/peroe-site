@@ -33,10 +33,15 @@ export function ArticleTableOfContents({ headings: initialHeadings = [] }: Artic
   const [headings, setHeadings] = useState<ArticleHeading[]>(initialHeadings);
   const [activeId, setActiveId] = useState("");
 
+  // 只在挂载时收集一次标题（服务端注入的 headings 已含全部标题）；
+  // 依赖数组保持空，避免每次 setHeadings 产生新引用造成无限渲染循环。
   useEffect(() => {
-    const updateHeadings = () => setHeadings(collectHeadings());
-    updateHeadings();
+    if (initialHeadings.length === 0) {
+      setHeadings(collectHeadings());
+    }
+  }, [initialHeadings.length]);
 
+  useEffect(() => {
     const updateActive = () => {
       const visible = headings
         .map((heading) => ({
@@ -50,6 +55,7 @@ export function ArticleTableOfContents({ headings: initialHeadings = [] }: Artic
     };
 
     window.addEventListener("scroll", updateActive, { passive: true });
+    updateActive();
     return () => window.removeEventListener("scroll", updateActive);
   }, [headings]);
 

@@ -5,7 +5,8 @@ import { Button } from '@/forum-bbs/components/ui/button';
 import { Input } from '@/forum-bbs/components/ui/input';
 import { Alert } from '@/forum-bbs/components/ui/alert';
 import { useForumAuth } from '@/forum-bbs/lib/forum/stores/auth';
-import { login, startGithubOAuth, getCurrentUser, isTotpError, totpErrorText } from '@/forum-bbs/lib/forum/api/client';
+import { login, startGithubOAuth, getCurrentUser, getForumConfig, isTotpError, totpErrorText } from '@/forum-bbs/lib/forum/api/client';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { describeGithubError } from '@/forum-bbs/lib/forum/utils/github-oauth';
 import { Spinner } from '@/forum-bbs/components/ui/spinner';
 // 站内路径在本项目里一律裸写（不带部署前缀），只有绕过 <Link>/navigate 的
@@ -28,6 +29,9 @@ function LoginForm() {
   const [externalConfirmOpen, setExternalConfirmOpen] = useState(false);
   const [githubLoading, setGithubLoading] = useState(false);
   const [githubError, setGithubError] = useState('');
+  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   const redirect = searchParams.get('redirect') || '/';
 
@@ -53,6 +57,16 @@ function LoginForm() {
     // 硬跳转不经路由，basename 不会自动补，这里手动补
     window.location.href = withBase(safeTarget);
   }, [redirect]);
+
+  // 拉取论坛配置（Turnstile 开关与站点密钥）
+  useEffect(() => {
+    getForumConfig()
+      .then((config) => {
+        setTurnstileEnabled(!!config.turnstileEnabled);
+        setTurnstileSiteKey(config.turnstileSiteKey || '');
+      })
+      .catch(() => setTurnstileEnabled(false));
+  }, []);
 
   // GitHub callback: backend returns token via URL search params or hash fragment
   useEffect(() => {
@@ -123,10 +137,11 @@ function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { setError('请输入邮箱和密码'); return; }
+    if (turnstileEnabled && !turnstileToken) { setError('验证码尚未加载完成或已过期，请稍后重试'); return; }
     setLoading(true);
     setError('');
     try {
-      const res = await login({ email: email.toLowerCase(), password });
+      const res = await login({ email: email.toLowerCase(), password, turnstileToken: turnstileToken || undefined });
       setToken(res.token);
       setUser(res.user);
       performRedirect(res.token);
@@ -202,6 +217,21 @@ function LoginForm() {
       <form onSubmit={handleSubmit} className="space-y-4" name="login" method="post">
         <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="邮箱" autoComplete="username" name="username" />
         <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="密码" autoComplete="current-password" name="password" />
+        {turnstileEnabled && turnstileSiteKey && (
+          <div className="flex justify-center">
+            <Turnstile
+              siteKey={turnstileSiteKey}
+              onSuccess={(token) => setTurnstileToken(token)}
+              onExpire={() => setTurnstileToken('')}
+            />
+          </div>
+        )}
+        {turnstileEnabled && !turnstileSiteKey && (
+          <Alert variant="warning">
+            论坛已启用 Turnstile 但未配置站点密钥，请联系管理员。
+          </Alert>
+        )}
+
         <Button type="submit" disabled={loading} className="w-full">{loading ? '登录中…' : '登录'}</Button>
       </form>
 

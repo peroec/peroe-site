@@ -194,7 +194,7 @@ function MeContent() {
       else setEmailMsg('邮箱变更链接无效或已过期');
       const p = new URLSearchParams(searchParams.toString());
       p.delete('email_change_token');
-      navigate(`/me${p.toString() ? "?" + p.toString() : ""}`, { replace: true });
+      navigate(`/forum/me${p.toString() ? "?" + p.toString() : ""}`, { replace: true });
     }
     const githubError = searchParams.get('github_error');
     if (githubError) setSaveMsg(`GitHub 绑定失败: ${githubError}`);

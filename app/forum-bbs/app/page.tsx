@@ -45,7 +45,7 @@ function ForumPostSkeleton() {
 function PostCard({ post, listSearch }: { post: ForumPostSummary; listSearch?: string }) {
   return (
     <Link
-      to={`/post/${post.id}`}
+      to={`/forum/post/${post.id}`}
       // state：把列表当时的 ?search= / ?page= 带进详情页，详情页的「返回论坛」
       // 才能回到这一屏而不是把用户甩回论坛首页（见 back-to-list.tsx）
       state={listSearch ? { listSearch } : undefined}
@@ -180,7 +180,7 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
     if (next.sort && next.sort !== 'latest') p.set('sort', next.sort);
     if (next.category) p.set('category', next.category);
     const qs = p.toString();
-    return `/${qs ? '?' + qs : ''}`;
+    return `/forum/${qs ? '?' + qs : ''}`;
   };
 
   const categoryLabel = category ? categories.find((c) => c.id === category)?.name || '全部分类' : '全部分类';
@@ -236,7 +236,7 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
 
       <div className="flex flex-row flex-wrap gap-2 mb-4">
         {/* GET 表单：无 JS 时回车即可搜索；有 JS 时上面的防抖 effect 自动提交 */}
-        <Form ref={formRef} method="get" action="/" className="flex-1 min-w-[12rem]">
+        <Form ref={formRef} method="get" action="/forum/" className="flex-1 min-w-[12rem]">
           {sort !== 'latest' && <input type="hidden" name="sort" value={sort} />}
           {category && <input type="hidden" name="category" value={category} />}
           <input

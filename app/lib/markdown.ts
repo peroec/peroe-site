@@ -103,7 +103,11 @@ const ext = marked.use({
       return `<div class="code-block"><div class="code-head">${langLabel}<button type="button" class="code-copy" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copy" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copied" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span class="code-copy-label">copy</span></button></div><pre><code class="language-${language} hljs">${highlighted}</code></pre></div>`;
     },
     image({ href, title, text }: any) {
-      return `<img src="${href}" alt="${text || ""}" title="${title || ""}" loading="lazy" data-lightbox="true" class="prose-img" />`;
+      // 属性值必须转义：恶意图片语法（![x" onerror="...](y)）可做属性注入 XSS
+      const safeHref = escapeHtml(href || "");
+      const safeAlt = escapeHtml(text || "");
+      const safeTitle = escapeHtml(title || "");
+      return `<img src="${safeHref}" alt="${safeAlt}" title="${safeTitle}" loading="lazy" data-lightbox="true" class="prose-img" />`;
     },
     // MDX 里的裸 HTML（<Link>、<Form> 等代码示例）转义为文本显示，
     // 避免被浏览器当真实标签解析；行内代码/代码围栏不受影响

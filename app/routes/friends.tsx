@@ -3,6 +3,7 @@ import { Link2, Search, Crown } from "lucide-react";
 import type { Friend } from "~/lib/types";
 import { Pagination } from "~/components/Pagination";
 import { useSearchParams } from "react-router";
+import { useFasData, FAS_REPO } from "~/lib/fas";
 
 export function meta() {
   return [
@@ -11,26 +12,16 @@ export function meta() {
   ];
 }
 
-/** 友链数据（对应开源仓库 af_friends-data 的结构，可按需增删） */
-const FRIENDS: Friend[] = [
-  { name: "22", avatar: "", description: "https://space.bilibili.com/44681442", url: "https://space.bilibili.com/44681442", vip: true },
-  { name: "带我入坑网站的超级大坏比", avatar: "", description: "Dmcken的免费推广位", url: "#", vip: true },
-  { name: "在***教了我很多的好朋友", avatar: "", description: "https://ie.cx", url: "https://ie.cx", vip: true },
-  { name: "1zyq1's_Blog", avatar: "", description: "Protect What You Love./爱你所爱！", url: "#" },
-  { name: "百里博客", avatar: "", description: "一个高中生的博客", url: "#" },
-  { name: "尘の个人博客", avatar: "", description: "一个高中生 UP 搭的博客 QwQ", url: "#" },
-  { name: "创梦星际", avatar: "", description: "一名高中生的个人博客", url: "#" },
-  { name: "吹水明月的小窝", avatar: "", description: "没有人是笨蛋，大家都只会对喜欢的人用心", url: "#" },
-  { name: "粉白妙妙屋", avatar: "", description: "我见青山多妩媚", url: "#" },
-];
-
 const PAGE_SIZE = 12;
 
 export default function Friends() {
   const [params] = useSearchParams();
   const page = Math.max(1, Number(params.get("page")) || 1);
   const [q, setQ] = useState("");
+  // 友链数据：客户端从 fas.060730.xyz/friends.json 拉取（1 小时缓存）
+  const { data: allFriends, isLoading, isError } = useFasData<Friend>("/friends.json");
 
+  const FRIENDS = allFriends;
   const filtered = q
     ? FRIENDS.filter(
         (f) =>
@@ -54,18 +45,18 @@ export default function Friends() {
           <Link2 className="h-4 w-4" /> 申请友链
         </h2>
         <p className="mb-3 text-sm text-muted">
-          直接在 GitHub 上创建文件，自动验证通过后就会出现在下方列表中。
+          想交换友链？在下方 GitHub 仓库按格式提交数据，站长审核通过后加入列表。
         </p>
         <ol className="list-decimal space-y-1.5 pl-5 text-sm text-muted">
           <li>
             打开{" "}
             <a
-              href="https://github.com/afoim/af_friends-data/tree/main/data/friends"
+              href={`${FAS_REPO}/tree/main/data/friends`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-white underline"
             >
-              afoim/af_friends-data/data/friends
+              {FAS_REPO.replace("https://github.com/", "")}/data/friends
             </a>
             ，点击右上角 … → Create new file
           </li>
@@ -88,7 +79,7 @@ export default function Friends() {
         <p className="mt-3 text-xs text-muted-2">
           提交后 GitHub Actions 会自动检查头像和网站的可达性，通过后合并。如果有问题，请提{" "}
           <a
-            href="https://github.com/afoim/af_friends-data/issues"
+            href={`${FAS_REPO}/issues`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-white underline"
@@ -117,6 +108,18 @@ export default function Friends() {
         </div>
         <span className="rounded border border-border px-4 py-2 text-sm text-muted">搜索</span>
       </div>
+
+      {isLoading && (
+        <p className="py-16 text-center text-sm text-muted">正在加载友链…</p>
+      )}
+      {isError && (
+        <p className="py-16 text-center text-sm text-muted">
+          友链加载失败（数据服务暂不可用）
+        </p>
+      )}
+      {!isLoading && !isError && items.length === 0 && (
+        <p className="py-16 text-center text-sm text-muted">暂无友链</p>
+      )}
 
       <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
         {items.map((f) => (

@@ -50,7 +50,7 @@ export default function ForumNewPostPage() {
     setError('');
     try {
       const post = await createPost({ title: title.trim(), content: content.trim(), categoryId });
-      navigate(`/post/${post.id}`);
+      navigate(`/forum/post/${post.id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '发布失败');
     } finally {
