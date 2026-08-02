@@ -6,6 +6,10 @@
   "compatibility_date": "2026-08-02",
   "compatibility_flags": ["nodejs_compat"],
   "account_id": "115794fc4320d099fff55b1b91999f2c",
+  // 构建命令已内嵌：部署时自动执行 generate-posts（博客内容）→ react-router build（SSR 产物）
+  "build": {
+    "command": "pnpm install && pnpm build"
+  },
   "assets": {
     "directory": "./build/client",
     "html_handling": "drop-trailing-slash",
