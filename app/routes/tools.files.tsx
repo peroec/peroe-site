@@ -3,6 +3,7 @@ import { HardDrive } from "lucide-react";
 import type { Route } from "./+types/tools.files";
 import { FileExplorer } from "~/components/FileExplorer";
 import type { FileItem } from "~/lib/file-utils";
+import { FILES_BASE_URL } from "~/lib/site";
 
 export function meta() {
   return [
@@ -11,7 +12,6 @@ export function meta() {
   ];
 }
 
-const FILES_BASE_URL = "https://raw-files.2x.nz";
 const FILES_INDEX_URL = `${FILES_BASE_URL}/index.json`;
 
 export default function FilesPage() {

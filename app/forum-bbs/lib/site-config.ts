@@ -1,13 +1,20 @@
 /**
- * 站点统一配置 —— 全站定制化的唯一入口。
- * 数据源：site.config.json（改这一个文件即可定制全站）。
- *
- * 部署前请修改 site.config.json：
- *  - url / ogImage：换成你的真实域名
- *  - name / title / description / avatar / slogan：你的站点信息
+ * 论坛站点配置 —— 数据源：主站统一配置 app/lib/site.config.json
+ * （forum-bbs 缝入大前端后不再维护独立配置，部署只改主站那一份）。
  */
-import rawConfig from "../site.config.json";
+import rawConfig from "@/lib/site.config.json";
 
-export const siteConfig = rawConfig;
+export const siteConfig = {
+  name: rawConfig.siteName,
+  title: `${rawConfig.siteName} 论坛`,
+  description: `${rawConfig.siteName} 论坛：技术交流与闲聊灌水社区，支持 Markdown 发帖、评论与点赞，欢迎注册加入讨论。`,
+  slogan: rawConfig.siteSlogan,
+  avatar: rawConfig.siteAvatar,
+  url: rawConfig.forumSiteUrl,
+  ogImage: "",
+  keywords: [rawConfig.siteName, "论坛", "社区"],
+  analytics: rawConfig.analytics,
+  authAllowedOrigins: rawConfig.authAllowedOrigins,
+};
 
 export type SiteConfig = typeof siteConfig;

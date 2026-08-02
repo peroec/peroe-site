@@ -1,0 +1,36 @@
+{
+  "//": "peroe 大前端统一部署配置 —— 部署前只改这一个文件即可。",
+  "//站点": "══════ 站点基本信息（浏览器标题/SEO/页脚）══════",
+  "siteName": "peroe",
+  "siteSlogan": "Protect What You Love.",
+  "siteDescription": "技术博客 · 社区论坛 · 实用在线工具集",
+  "siteTitle": "peroe 官方网站",
+  "siteAvatar": "",
+  "//域名": "══════ 域名配置（全部改成你自己的域名）══════",
+  "//主站": "大前端主站域名（本文档站点），canonical/分享卡片用",
+  "mainSiteUrl": "https://peroe-main.juluogogo.workers.dev",
+  "//门户": "门户站域名（hub，各子站返回主页指向这里）",
+  "homeUrl": "https://hub.060730.xyz",
+  "//论坛后端": "论坛 API 回源地址（peroe-api Worker 的域名）",
+  "forumApiBase": "https://forum.060730.xyz",
+  "//论坛前端": "论坛独立部署地址（当前存留的 bbs 站，SEO canonical 用）",
+  "forumSiteUrl": "https://bbs.060730.xyz",
+  "//文件服务": "工具箱文件下载的索引服务（raw-files 类静态 JSON 目录树）",
+  "filesBaseUrl": "https://raw-files.2x.nz",
+  "//统计": "══════ 统计脚本（umami 等）：src 留空则不注入统计 ══════",
+  "analytics": {
+    "src": "https://cloud.umami.is/script.js",
+    "websiteId": "842d980c-5e11-4834-a2a8-5daaa285ce66"
+  },
+  "//社交": "══════ 首页「关注 & 联系」按钮（icon: heart/video/message/send/github/rss）══════",
+  "socialLinks": [
+    { "label": "爱发电", "icon": "heart", "url": "https://www.ifdian.net/a/acofork" },
+    { "label": "B站主页", "icon": "video", "url": "https://space.bilibili.com/325903362" },
+    { "label": "QQ群", "icon": "message", "url": "https://qm.qq.com/q/FWqOHlwL2m" },
+    { "label": "Telegram群", "icon": "send", "url": "https://t.me/+_07DERp7k1ljYTc1" },
+    { "label": "GitHub", "icon": "github", "url": "https://github.com/afoim" },
+    { "label": "Folo", "icon": "rss", "url": "https://app.folo.is/share/feeds/245004133358075904" }
+  ],
+  "//论坛授权": "允许跨站登录交接的 origin 白名单（authorize 页校验，逗号分隔）",
+  "authAllowedOrigins": "https://bbs.060730.xyz"
+}

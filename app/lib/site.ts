@@ -1,30 +1,37 @@
-/** 站点信息唯一来源 */
-export const SITE_NAME = "peroe";
-export const SITE_AVATAR = "";
-export const SITE_SLOGAN = "Protect What You Love.";
-export const SITE_DESCRIPTION = "技术博客 · 社区论坛 · 实用在线工具集";
-export const SITE_TITLE = "peroe 官方网站";
+/**
+ * 站点统一配置 —— 唯一来源：app/lib/site.config.json（部署时只改这一个文件）。
+ * 见 docs/deploy-config.md 的说明。
+ */
+import rawConfig from "./site.config.json";
+
+export interface SocialLink {
+  label: string;
+  icon: string;
+  url: string;
+}
+
+export const SITE_NAME: string = rawConfig.siteName;
+export const SITE_AVATAR: string = rawConfig.siteAvatar;
+export const SITE_SLOGAN: string = rawConfig.siteSlogan;
+export const SITE_DESCRIPTION: string = rawConfig.siteDescription;
+export const SITE_TITLE: string = rawConfig.siteTitle;
 
 /** 门户主页地址（各子站返回的 home） */
-export const HOME_URL = "https://hub.060730.xyz";
+export const HOME_URL: string = rawConfig.homeUrl;
 
-/** 论坛后端（SSR 回源，见 api.server.ts） */
-export const FORUM_API_BASE_URL = "https://forum.060730.xyz";
+/** 论坛后端（SSR 回源） */
+export const FORUM_API_BASE_URL: string = rawConfig.forumApiBase;
+
+/** 论坛独立部署地址（SEO canonical 用） */
+export const FORUM_SITE_URL: string = rawConfig.forumSiteUrl;
+
+/** 工具箱文件索引服务 */
+export const FILES_BASE_URL: string = rawConfig.filesBaseUrl;
 
 /** 统计脚本（umami 等）：src 非空才注入 index.html；websiteId 为 data-website-id */
-export const ANALYTICS = {
-  src: "https://cloud.umami.is/script.js",
-  websiteId: "842d980c-5e11-4834-a2a8-5daaa285ce66",
-};
+export const ANALYTICS: { src: string; websiteId: string } = rawConfig.analytics;
 
-export const SOCIAL_LINKS = [
-  { label: "爱发电", icon: "heart", url: "https://www.ifdian.net/a/acofork" },
-  { label: "B站主页", icon: "video", url: "https://space.bilibili.com/325903362" },
-  { label: "QQ群", icon: "message", url: "https://qm.qq.com/q/FWqOHlwL2m" },
-  { label: "Telegram群", icon: "send", url: "https://t.me/+_07DERp7k1ljYTc1" },
-  { label: "GitHub", icon: "github", url: "https://github.com/afoim" },
-  { label: "Folo", icon: "rss", url: "https://app.folo.is/share/feeds/245004133358075904" },
-];
+export const SOCIAL_LINKS: SocialLink[] = rawConfig.socialLinks;
 
 /** 工具下拉（独立部署的 2xss_box 工具箱 + 站内工具页） */
 export const TOOL_ITEMS = [
