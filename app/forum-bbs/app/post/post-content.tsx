@@ -550,7 +550,7 @@ export function PostContent({
       {/* ── Comments ── */}
       <section id="comments" className="mt-8 pt-8 border-t border-border scroll-mt-20">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">评论</h2>
+          <h2 id="comments" className="text-lg font-semibold">评论</h2>
           {/* 真链接而不是 onClick 按钮：禁用 JS 时也能换排序（loader 认 ?csort），
               有 JS 时 <Link> 仍走客户端导航。preventScrollReset 让页面停在评论区 */}
           <div className="flex gap-1">

@@ -130,7 +130,7 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
             </span>
           </div>
 
-          <section className="mt-10 border-t border-border pt-8">
+          <section id="comments" className="mt-10 border-t border-border pt-8">
             <h2 className="mb-6 text-2xl font-semibold text-white">评论</h2>
             <Giscus />
           </section>

@@ -9,6 +9,7 @@ import {
 import type { Route } from "./+types/root";
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
+import { FloatingActions } from "~/components/FloatingActions";
 import { SITE_TITLE, ANALYTICS } from "~/lib/site";
 import "./app.css";
 
@@ -59,6 +60,7 @@ export default function App() {
         <Outlet />
       </div>
       <Footer />
+      <FloatingActions />
     </div>
   );
 }
