@@ -15,7 +15,7 @@ const CONFIG = {
     storageKey: 'forum-api-base-url',
     envKey: 'forum-api-env',
     label: '论坛',
-    urls: { prod: 'https://i.2x.nz', dev: 'http://127.0.0.1:8787' },
+    urls: { prod: 'https://forum.060730.xyz', dev: 'http://127.0.0.1:8787' },
   },
 };
 

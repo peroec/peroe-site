@@ -39,7 +39,9 @@ export function getBaseUrl(): string {
   if (typeof window === 'undefined') return FORUM_API_BASE_URLS.prod;
   try {
     const saved = localStorage.getItem('forum-api-base-url');
-    if (saved && /^https?:\/\//.test(saved)) return saved;
+    // 只接受 https 且非本机/原作者地址；本地残留（127.0.0.1/localhost/http）
+    // 和原作者域（i.2x.nz）一律忽略，避免缝合进大前端后误打错后端
+    if (saved && /^https:\/\/(?!localhost|127\.0\.0\.1|0\.0\.0\.0)(?!i\.2x\.nz)([^/]+)/.test(saved)) return saved;
   } catch {}
   return FORUM_API_BASE_URLS.prod;
 }
