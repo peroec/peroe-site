@@ -95,7 +95,7 @@ export default function AuthorizePage() {
         <p className="text-sm text-muted-foreground mb-4">
           请求方站点不在允许的范围内，已拒绝本次授权。如果你是从站内链接过来的，请重试一次。
         </p>
-        <Link to="/"><Button size="sm">返回论坛</Button></Link>
+        <Link to="/forum/"><Button size="sm">返回论坛</Button></Link>
       </main>
     );
   }

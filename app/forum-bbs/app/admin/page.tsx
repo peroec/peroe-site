@@ -303,7 +303,7 @@ const currentUserId = user?.id;
       <main className="container mx-auto max-w-2xl px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-4">管理控制台</h1>
         <p className="text-muted-foreground">当前账号不是管理员</p>
-        <Link to="/" className="text-primary hover:underline mt-4 inline-block">返回论坛</Link>
+        <Link to="/forum/" className="text-primary hover:underline mt-4 inline-block">返回论坛</Link>
       </main>
     );
   }
@@ -314,7 +314,7 @@ const currentUserId = user?.id;
     <main className="container mx-auto max-w-6xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold leading-none">
+          <Link to="/forum/" className="inline-flex items-center gap-2 text-2xl font-bold leading-none">
             <Icon icon="mdi:arrow-left" className="size-6" />
             管理控制台
           </Link>

@@ -72,6 +72,10 @@ export function stripBase(pathname: string): string {
   if (BASE_PATH && pathname.startsWith(BASE_PATH)) {
     return pathname.slice(BASE_PATH.length) || "/";
   }
+  // 缝合进大前端后挂在 /forum 下：剥掉 /forum 前缀，让路由表用裸路径匹配
+  if (pathname.startsWith("/forum")) {
+    return pathname.slice("/forum".length) || "/";
+  }
   return pathname;
 }
 

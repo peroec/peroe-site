@@ -148,10 +148,10 @@ export default function ForumResetPasswordPage() {
               )}
               重置密码
             </Button>
-            <Link to="/auth/login" className="text-sm text-primary underline decoration-dashed underline-offset-4">
+            <Link to="/forum/auth/login" className="text-sm text-primary underline decoration-dashed underline-offset-4">
               返回登录
             </Link>
-            <Link to="/auth/forgot-password" className="text-sm text-primary underline decoration-dashed underline-offset-4">
+            <Link to="/forum/auth/forgot-password" className="text-sm text-primary underline decoration-dashed underline-offset-4">
               重新申请邮件
             </Link>
           </div>

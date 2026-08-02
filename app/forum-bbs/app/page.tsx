@@ -215,7 +215,7 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
                   <span className="text-sm">{user.username}</span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => navigate('/me')}>个人中心</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/forum/me')}>个人中心</DropdownMenuItem>
                   {user.role === 'admin' && (
                     <DropdownMenuItem className="p-0">
                       <a href={withBase("/admin")} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-2 py-1.5 w-full">
@@ -223,13 +223,13 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
                       </a>
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => { logout(); navigate('/'); }}>退出登录</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => { logout(); navigate('/forum/'); }}>退出登录</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Link to="/post/new"><Button size="sm">发帖</Button></Link>
+              <Link to="/forum/post/new"><Button size="sm">发帖</Button></Link>
             </div>
           ) : (
-            <Link to="/auth/login"><Button size="sm">登录</Button></Link>
+            <Link to="/forum/auth/login"><Button size="sm">登录</Button></Link>
           )}
         </div>
       </div>

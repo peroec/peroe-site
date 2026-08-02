@@ -39,7 +39,7 @@ export default function ForumNewPostPage() {
       <main className="container mx-auto max-w-3xl px-4 py-8 text-center">
         <h1 className="text-xl font-bold mb-4">发布新帖</h1>
         <p className="text-muted-foreground mb-4">请先登录后再发帖</p>
-        <Link to="/auth/login?redirect=/post/new"><Button>去登录</Button></Link>
+        <Link to="/forum/auth/login?redirect=/post/new"><Button>去登录</Button></Link>
       </main>
     );
   }
@@ -65,7 +65,7 @@ export default function ForumNewPostPage() {
   return (
     <main className="container mx-auto max-w-4xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">← 返回论坛</Link>
+        <Link to="/forum/" className="text-sm text-muted-foreground hover:text-foreground">← 返回论坛</Link>
         <h1 className="text-xl font-bold">发布新帖</h1>
       </div>
 

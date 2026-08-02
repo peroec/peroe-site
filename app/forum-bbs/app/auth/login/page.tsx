@@ -276,8 +276,8 @@ function LoginForm() {
       )}
 
       <div className="flex justify-between mt-4 text-sm text-muted-foreground">
-        <Link to="/auth/register" className="hover:text-foreground">没有账号？去注册</Link>
-        <Link to="/auth/forgot-password" className="hover:text-foreground">忘记密码？</Link>
+        <Link to="/forum/auth/register" className="hover:text-foreground">没有账号？去注册</Link>
+        <Link to="/forum/auth/forgot-password" className="hover:text-foreground">忘记密码？</Link>
       </div>
     </main>
   );

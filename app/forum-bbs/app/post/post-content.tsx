@@ -357,7 +357,7 @@ export function PostContent({
       }
       setDeleteConfirmOpen(false);
       toast.success('删除帖子', { description: '帖子已删除。' });
-      navigate('/');
+      navigate('/forum/');
     } catch (e: unknown) {
       toast.error('删除帖子', { description: e instanceof Error ? e.message : '删除失败，请稍后再试。' });
     }
@@ -442,7 +442,7 @@ export function PostContent({
     return (
       <Shell embedded={embedded}>
         <p className="text-destructive">{error}</p>
-        <Link to="/"><Button variant="outline" size="sm" className="mt-4">← 返回论坛</Button></Link>
+        <Link to="/forum/"><Button variant="outline" size="sm" className="mt-4">← 返回论坛</Button></Link>
       </Shell>
     );
   }
@@ -452,7 +452,7 @@ export function PostContent({
   return (
     <Shell embedded={embedded}>
       {/* 从搜索 / 第 N 页点进来的，返回时要回到那一屏，不能甩回论坛首页 */}
-      <BackToList to="/" label="返回论坛" />
+      <BackToList to="/forum/" label="返回论坛" />
 
       {/* Post */}
       {/* 正文不再包卡片：这层 border + p-4 在 375px 手机上要吃掉 34px 正文宽度，

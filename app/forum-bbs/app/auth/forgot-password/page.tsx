@@ -103,13 +103,13 @@ export default function ForumForgotPasswordPage() {
               发送重置邮件
             </Button>
             <Link
-              to="/auth/login"
+              to="/forum/auth/login"
               className="text-sm text-primary underline decoration-dashed underline-offset-4"
             >
               返回登录
             </Link>
             <Link
-              to="/auth/reset-password"
+              to="/forum/auth/reset-password"
               className="text-sm text-primary underline decoration-dashed underline-offset-4"
             >
               已有 token？去重置

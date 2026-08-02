@@ -130,7 +130,7 @@ function MeContent() {
   // Redirect if not logged in (only after auth finishes loading)
   useEffect(() => {
     if (authLoading) return;
-    if (!user) navigate('/auth/login?redirect=/me');
+    if (!user) navigate('/forum/auth/login?redirect=/me');
   }, [authLoading, user, navigate]);
 
   // 登录设备列表：登录态确定后拉一次
@@ -216,7 +216,7 @@ function MeContent() {
       <main className="container mx-auto max-w-4xl px-4 py-8 text-center">
         <h1 className="text-xl font-bold mb-4">个人中心</h1>
         <p className="text-muted-foreground mb-4">请先登录后查看个人中心</p>
-        <Link to="/auth/login?redirect=/me"><Button>去登录</Button></Link>
+        <Link to="/forum/auth/login?redirect=/me"><Button>去登录</Button></Link>
       </main>
     );
   }
@@ -386,7 +386,7 @@ function MeContent() {
   return (
     <main className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
-        <Link to="/" className="inline-flex items-center gap-2 text-2xl font-bold leading-none">
+        <Link to="/forum/" className="inline-flex items-center gap-2 text-2xl font-bold leading-none">
           <Icon icon="mdi:arrow-left" className="size-6" />
           个人中心
         </Link>
@@ -725,7 +725,7 @@ function MeContent() {
         <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => {
           // 不 await：logout 同步清本地态后台吊销会话；先等待会让本页「未登录跳登录页」的 effect 抢先触发
           logout();
-          navigate('/');
+          navigate('/forum/');
         }}>退出登录</Button>
       </div>
 
