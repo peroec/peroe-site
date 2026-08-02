@@ -84,7 +84,7 @@ export const MermaidContent = memo(function MermaidContent({
 
     preloadMermaid().then((mermaid) => {
       if (cancelled) return;
-      mermaid.initialize({ startOnLoad: false });
+      mermaid.initialize({ startOnLoad: false, securityLevel: 'strict' });
       for (let i = 0; i < blocks.length; i++) {
         // 只在预先约定好的占位 div 里注入 SVG —— 这些 div 存在于
         // cleanHtml 中，由 dangerouslySetInnerHTML 渲染，但只在初次

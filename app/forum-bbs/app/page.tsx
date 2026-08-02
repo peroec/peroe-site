@@ -146,7 +146,7 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
   const { posts, total, page, search, sort, category, categories, pageSize } = initial;
   // 只有仍在论坛列表页内的导航才显示骨架（翻页/筛选/搜索），
   // 点击帖子跳转到 /forum/post/:id 时保持列表不变，避免骨架屏闪烁。
-  const loading = navigation.state === 'loading' && navigation.location?.pathname === '/';
+  const loading = navigation.state === 'loading' && (navigation.location?.pathname === '/' || navigation.location?.pathname === '/forum' || navigation.location?.pathname === '/forum/');
 
   const [searchInput, setSearchInput] = useState(search);
   const [forumDialogOpen, setForumDialogOpen] = useState(false);

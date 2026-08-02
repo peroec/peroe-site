@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { Icon } from '@/forum-bbs/components/ui/icon';
 import { cn } from '@/forum-bbs/lib/utils';
@@ -21,7 +21,8 @@ export function MarkdownEditor({ value, onChange, placeholder, minHeight = 400, 
   const [uploading, setUploading] = useState(false);
   const [activeTab, setActiveTab] = useState<'write' | 'preview'>('write');
 
-  const html = DOMPurify.sanitize(renderMarkdown(value || ''));
+  // 预览渲染（markdown-it + highlight + DOMPurify）成本高，只在内容变化时重算
+  const html = useMemo(() => DOMPurify.sanitize(renderMarkdown(value || '')), [value]);
 
   const handlePaste = useCallback(async (e: React.ClipboardEvent) => {
     const file = e.clipboardData.files[0];

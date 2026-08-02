@@ -9,6 +9,7 @@ import {
   getPost, getComments, getCategories, createComment, deleteComment, likeComment, likePost, pinComment, updatePost, deletePost, deleteAdminPost, uploadFile, buildCommentTree,
 } from '@/forum-bbs/lib/forum/api/client';
 import { parseCommentSort, type CommentSort } from '@/forum-bbs/lib/forum/api/map-comment';
+import { useCommentStream, insertComment } from '@/forum-bbs/lib/forum/use-comment-stream';
 import type { ForumPostDetail, ForumComment, ForumCategory } from '@/forum-bbs/lib/forum/types';
 
 /** 评论可能带服务端渲染好的 html（SSR 首屏），也可能没有（客户端拉取的） */
@@ -52,12 +53,13 @@ function CommentItem({
     try {
       const r = await likeComment(comment.id);
       setLiked(r.liked);
-      // API may not return updated count — calculate locally
-      setLikeCount((prev) => r.liked ? prev + 1 : Math.max(0, prev - 1));
+      // 用服务端返回的绝对计数，避免相对自增从错误基数漂移（与帖子点赞 B-2 一致）
+      const base = comment.likeCount ?? 0;
+      setLikeCount(r.likeCount ?? (r.liked ? base + 1 : Math.max(0, base - 1)));
     } catch (e: unknown) {
       toast.error('点赞失败', { description: e instanceof Error ? e.message : '请稍后再试' });
     }
-  }, [comment.id]);
+  }, [comment.id, comment.likeCount]);
 
   const handlePin = useCallback(async () => {
     try {
@@ -229,6 +231,20 @@ export function PostContent({
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(!initial);
+
+  // 实时评论（SSE）：新评论即时插入，断线重连后重拉一次全量
+  useCommentStream(id, {
+    onNewComment: (c) =>
+      setComments((prev) => insertComment(prev, c as ForumCommentWithHtml, commentSort)),
+    onReconnect: () => {
+      // 重连窗口里的广播补不回来，重新拉全量
+      if (id) {
+        getComments(id, commentSort)
+          .then((raw) => setComments(buildCommentTree(raw)))
+          .catch(() => {});
+      }
+    },
+  });
 
   // Edit state
   const [editing, setEditing] = useState(false);
@@ -452,7 +468,7 @@ export function PostContent({
   return (
     <Shell embedded={embedded}>
       {/* 从搜索 / 第 N 页点进来的，返回时要回到那一屏，不能甩回论坛首页 */}
-      <BackToList to="/forum/" label="返回论坛" />
+      <BackToList to="/" label="返回论坛" />
 
       {/* Post */}
       {/* 正文不再包卡片：这层 border + p-4 在 375px 手机上要吃掉 34px 正文宽度，

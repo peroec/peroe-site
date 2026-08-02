@@ -121,7 +121,7 @@ export function FileExplorer({ items, baseUrl = "" }: FileExplorerProps) {
           ) : (
             <a
               key={item.path}
-              href={`${baseUrl}/${item.path}`}
+              href={`${baseUrl}/${item.path.split("/").map(encodeURIComponent).join("/")}`}
               download={item.name}
               target="_blank"
               rel="noopener noreferrer"
