@@ -171,3 +171,11 @@ pnpm run typecheck   # ç¡®è®¤æ—  TS é”™è¯¯
 pnpm build           # ç¡®è®¤ SSR æ„å»ºé€šè¿‡
 pnpm dev             # æœ¬åœ°è®¿é—® /forumã€/forum/post/1ã€/forum/auth/login
 ```
+
+## Î¬»¤Ä£Ê½£¨2026-08-02 ÓÃ»§¾ö¶¨£©
+
+- **Î¨Ò»ÕæÔ´**£º\main-site/app/forum-bbs/\£¬ËùÓĞÂÛÌ³¹¦ÄÜ¸Ä¶¯Ö»¸ÄÕâÀï¡£
+- ¶ÀÁ¢Õ¾ \bs.060730.xyz\£¨2xss_bbs ¹¹½¨£©Ôİ²»ÏÂÏß£¬±£ÁôÔËĞĞµ«²»Î¬»¤¡£
+- ±¾µØ \2xss_bbs/\ Óë GitHub \peroe-bbs\ ´æµµ±£Áô£¬Git ²»¶¯¡£
+- ºóĞøÈçĞè¶ÀÁ¢²¿ÊğÂÛÌ³£º´Ó \pp/forum-bbs/\ ·´Ïò²ğ³ö£¨°Ñ \@/forum-bbs/\ Ç°×º¸Ä»Ø \@/\¡¢»Ö¸´ \createBrowserRouter\ + basename£©¡£
+
