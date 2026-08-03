@@ -202,10 +202,18 @@ body {
   border-bottom: 1px solid #333;
 }
 .prose-dark .code-block .code-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 0.75rem;
   color: #a1a1b0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+.prose-dark .code-block .code-lang .code-icon {
+  width: 0.9em;
+  height: 0.9em;
+  flex: none;
 }
 .prose-dark .code-block .code-copy {
   display: inline-flex;
