@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { Route } from "./+types/posts.$slug";
 import { ArrowLeft, CalendarDays, Eye, FilePen } from "lucide-react";
 // 高亮在客户端完成：hljs 随文章页 chunk 加载（懒加载路由），SSR 不执行
@@ -9,6 +9,7 @@ import nginx from "highlight.js/lib/languages/nginx";
 import http from "highlight.js/lib/languages/http";
 import { renderMarkdown } from "~/lib/markdown";
 import { getPostBySlug } from "~/lib/posts.server";
+import { fetchUmamiPageviews } from "~/lib/umami-views";
 import {
   ArticleTableOfContents,
   extractArticleHeadings,
@@ -119,6 +120,17 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
   const html = renderMarkdown(post.content || "");
   const headings = extractArticleHeadings(html);
 
+  // 浏览量：SSR 恒 0，客户端水合后用 umami 回显（shareToken 未配置则保持 0）
+  const [views, setViews] = useState<number>(post.views ?? 0);
+  useEffect(() => {
+    let cancelled = false;
+    // 路径与博客路由一致（umami 精确匹配，注意尾斜杠）
+    fetchUmamiPageviews(`/posts/${post.slug}/`).then((v) => {
+      if (!cancelled && typeof v === "number") setViews(v);
+    });
+    return () => { cancelled = true; };
+  }, [post.slug]);
+
   return (
     <>
       <ArticleReadingProgress />
@@ -150,7 +162,7 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
               <span aria-hidden>·</span>
               <span className="inline-flex items-center gap-1">
                 <Eye className="h-3 w-3" />
-                {post.views} 次浏览
+                {views} 次浏览
               </span>
               {post.tags?.length > 0 && (
                 <div className="flex gap-1.5">

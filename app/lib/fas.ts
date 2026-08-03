@@ -18,7 +18,7 @@ interface FasData {
   name: string;
   avatar?: string | null;
   description?: string;
-  url: string;
+  url?: string;
   vip?: boolean;
 }
 

@@ -11,6 +11,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   github_already_linked_to_other: '该 GitHub 账号已绑定到另一个论坛账号。',
   invalid_link_state: '绑定状态无效，请重新发起绑定。',
   create_user_failed: '创建账号失败，请稍后重试。',
+  banned: '该账号已被封禁，无法登录。如有疑问请联系管理员',
   login_failed: 'GitHub 登录失败。',
   internal_error: 'GitHub 登录内部错误，请稍后重试。',
   access_denied: '已取消 GitHub 授权。',

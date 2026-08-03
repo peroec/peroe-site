@@ -23,7 +23,10 @@
   "//统计": "══════ 统计脚本（umami 等）：src 留空则不注入统计 ══════",
   "analytics": {
     "src": "https://cloud.umami.is/script.js",
-    "websiteId": "842d980c-5e11-4834-a2a8-5daaa285ce66"
+    "websiteId": "842d980c-5e11-4834-a2a8-5daaa285ce66",
+    "//浏览量回显": "umami 分享 URL 配置（cloud.umami.is → 站点 → 分享 URL 生成）。shareToken 与区域(us/eu) 决定浏览量 API 域名；shareToken 留空则文章浏览量不显示",
+    "shareToken": "",
+    "region": "us"
   },
   "//社交": "══════ 首页「关注 & 联系」按钮（icon: heart/video/message/send/github/rss）══════",
   "socialLinks": [

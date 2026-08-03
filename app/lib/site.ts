@@ -37,6 +37,9 @@ export const FAS_REPO: string = rawConfig.fasRepo;
 /** 统计脚本（umami 等）：src 非空才注入 index.html；websiteId 为 data-website-id */
 export const ANALYTICS: { src: string; websiteId: string } = rawConfig.analytics;
 
+/** umami 分享配置（浏览量回显）：shareToken 非空才启用客户端浏览量查询 */
+export const UMAMI_SHARE: { shareToken: string; region: string } = rawConfig.analytics;
+
 export const SOCIAL_LINKS: SocialLink[] = rawConfig.socialLinks;
 
 /** 工具下拉（独立部署的 2xss_box 工具箱 + 站内工具页） */
