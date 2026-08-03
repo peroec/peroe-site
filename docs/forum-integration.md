@@ -20,13 +20,14 @@ main-site/
 │   │   ├── components/             #   UI 组件库（icon/button/dialog/...）
 │   │   ├── lib/                    #   论坛 API 客户端、store、工具
 │   │   ├── styles/hljs.css         #   代码高亮样式
-│   │   ├── globals.css             #   论坛 Tailwind v4 主题（CSS 变量）
-│   │   └── site.config.json        #   论坛站点配置
+│   │   └── globals.css             #   论坛 Tailwind v4 主题（CSS 变量）
 │   └── routes/
 │       ├── forum-layout.tsx        # 论坛布局（Provider 包裹）
 │       ├── forum-home.tsx          # wrapper → forum-bbs/pages/forum-list
-│       └── forum-page-*.tsx        # 13 个页面 wrapper
+│       └── forum-page-*.tsx        # 12 个页面 wrapper（+forum-home 共 13 个路由）
 └── routes.ts                       # /forum 子路由注册
+
+> 论坛**无独立 site.config.json**：站点配置统一走 `main-site/app/lib/site.config.json`（论坛 API 地址、域名、统计等），见 `docs/deploy-config.md`。
 ```
 
 ## 迁移步骤（复用流程）
@@ -41,7 +42,7 @@ cp -r 2xss_bbs/src/lib        main-site/app/forum-bbs/lib
 cp -r 2xss_bbs/src/app/forum  main-site/app/forum-bbs/app
 cp -r 2xss_bbs/src/styles     main-site/app/forum-bbs/styles
 cp    2xss_bbs/src/app/globals.css main-site/app/forum-bbs/globals.css
-cp    2xss_bbs/src/site.config.json main-site/app/forum-bbs/site.config.json
+# 站点配置不复制：论坛统一用 main-site/app/lib/site.config.json（见 docs/deploy-config.md）
 ```
 
 ### 2. 重写 import 前缀
@@ -172,10 +173,11 @@ pnpm build           # 确认 SSR 构建通过
 pnpm dev             # 本地访问 /forum、/forum/post/1、/forum/auth/login
 ```
 
-## ά��ģʽ��2026-08-02 �û�������
+## 维护模式（2026-08-02 用户确认）
 
-- **Ψһ��Դ**��\main-site/app/forum-bbs/\��������̳���ܸĶ�ֻ�����
-- ����վ \bs.060730.xyz\��2xss_bbs �������ݲ����ߣ��������е���ά����
-- ���� \2xss_bbs/\ �� GitHub \peroe-bbs\ �浵������Git ������
-- �����������������̳���� \pp/forum-bbs/\ ���������� \@/forum-bbs/\ ǰ׺�Ļ� \@/\���ָ� \createBrowserRouter\ + basename����
+- **唯一真源**：`main-site/app/forum-bbs/` —— 论坛所有改动只在这里。
+- 独立站 `bbs.060730.xyz`（2xss_bbs）已下线，不再维护。
+- 本地 `2xss_bbs/` 与 GitHub `peroe-bbs` 存档保留（Git 历史可查）。
+- 论坛入口在 main-site 内，路由以 `/forum` 前缀（`@/forum-bbs/` 或 `@/` 别名），
+  `createBrowserRouter` + basename 处理。
 

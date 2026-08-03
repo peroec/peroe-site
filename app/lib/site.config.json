@@ -19,7 +19,7 @@
   "filesBaseUrl": "https://raw-files.2x.nz",
   "//友链赞助": "友链/赞助数据服务（af_friends-data 仓库部署的静态 JSON）",
   "fasOrigin": "https://fas.060730.xyz",
-  "fasRepo": "https://github.com/JuLuogo/af_friends-data",
+  "fasRepo": "https://github.com/peroec/af_friends-data",
   "//统计": "══════ 统计脚本（umami 等）：src 留空则不注入统计 ══════",
   "analytics": {
     "src": "https://cloud.umami.is/script.js",

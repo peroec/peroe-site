@@ -34,7 +34,7 @@ react-router build                # SSR 构建（server + client）
 |---|---|
 | SSR 服务端 | `build/server/index.js`（Worker 入口依赖） |
 | 静态资源 | `build/client/`（HTML/JS/CSS/图片，Workers Assets 托管） |
-| 博客数据 | `app/lib/generated-posts.ts`（构建时生成，161 篇） |
+| 博客数据 | `app/lib/generated-posts.ts`（构建时生成，162 篇） |
 | 论坛模块 | `app/forum-bbs/`（源码级缝合，随构建打包） |
 
 > wrangler.jsonc 的 `assets.directory` 指向 `./build/client`，`main` 指向 `./workers/app.ts`。
