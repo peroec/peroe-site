@@ -9,6 +9,7 @@ import {
   extractArticleHeadings,
 } from "~/components/ArticleTableOfContents";
 import { Giscus } from "~/components/Giscus";
+import { ArticleReadingProgress } from "~/components/ArticleReadingProgress";
 import { MermaidContent } from "~/forum-bbs/components/mermaid-renderer";
 
 export function meta({ loaderData }: Route.MetaArgs) {
@@ -73,7 +74,9 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
   const headings = extractArticleHeadings(html);
 
   return (
-    <main className="container mx-auto max-w-6xl px-4 py-8">
+    <>
+      <ArticleReadingProgress />
+      <main className="article-shell container mx-auto max-w-6xl px-4 py-8">
       <div className="relative flex gap-8">
         <article className="mx-auto min-w-0 max-w-3xl flex-1">
           <Link
@@ -152,6 +155,7 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
       <div className="xl:hidden">
         <ArticleTableOfContents headings={headings} />
       </div>
-    </main>
+      </main>
+    </>
   );
 }

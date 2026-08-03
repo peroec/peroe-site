@@ -35,9 +35,9 @@ const CALLOUT_TITLES: Record<string, string> = {
   tip: "提示",
   important: "重要",
   warning: "警告",
-  caution: "危险",
-  info: "信息",
-  danger: "危险",
+  caution: "小心",
+  info: "说明",
+  danger: "小心",
   success: "成功",
 };
 
