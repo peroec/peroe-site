@@ -493,7 +493,55 @@ function MeContent() {
           {!prefsLoading && notifyPrefs && (
             <details className="space-y-2">
               <summary className="text-sm text-muted-foreground cursor-pointer hover:text-foreground select-none">通知偏好</summary>
-              <div className="mt-2 space-y-1.5">
+              <div className="mt-2 space-y-3">
+                {/* 渠道选择：在「矩阵允许 ∩ 已绑定」的渠道中选择 */}
+                <div className="space-y-1.5">
+                  <p className="text-xs text-muted-foreground">推送渠道（第一个为优先渠道，邮箱为兜底）</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(['email', 'qq'] as const).map((ch) => {
+                      const enabled = ch === 'email'
+                        ? !!notifyPrefs.email
+                        : !!notifyPrefs.qq;
+                      if (!enabled && ch === 'qq') return null;
+                      const active = (notifyPrefs.channels ?? ['email']).includes(ch);
+                      return (
+                        <label
+                          key={ch}
+                          className={`inline-flex items-center gap-1.5 border rounded-full px-3 py-1.5 text-xs cursor-pointer select-none transition-colors ${active ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:bg-muted'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            className="hidden"
+                            checked={active}
+                            onChange={async (e) => {
+                              const cur = notifyPrefs.channels ?? ['email'];
+                              const next = e.target.checked
+                                ? [...cur, ch]
+                                : cur.filter((x) => x !== ch);
+                              if (next.length === 0) {
+                                toast.error('至少保留一个渠道');
+                                return;
+                              }
+                              // preferred 随之更新：选中即优先，取消时退回剩余第一个
+                              const preferred = e.target.checked ? ch : next[0];
+                              // 渠道开关联动所有类型级开关（选中渠道 → 该渠道各类通知默认开启）
+                              const typePatch: Partial<NotifyPrefs> = {};
+                              for (const t of ['comment', 'reply', 'admin_action', 'post_deleted', 'lora', 'recommendation', 'article_update'] as const) {
+                                typePatch[t] = { ...((notifyPrefs as any)[t] ?? {}), [ch]: e.target.checked };
+                              }
+                              const patch = { channels: next, preferred, ...typePatch };
+                              setNotifyPrefs({ ...notifyPrefs, ...patch });
+                              setPrefsMsg('');
+                              try { await updateNotifyPrefs(patch as any); setPrefsMsg('已保存'); } catch { setPrefsMsg('保存失败'); }
+                            }}
+                          />
+                          {active && <span>★</span>}
+                          {ch === 'email' ? '邮箱' : 'QQ'}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="grid grid-cols-[1fr_auto_auto] gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   <span></span><span className="text-center">邮件</span><span className="text-center">QQ</span>
                   {([
@@ -512,7 +560,7 @@ function MeContent() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">QQ 通知需要先绑定 QQ 号并添加 Bot 好友才能收到</p>
+                <p className="text-xs text-muted-foreground mt-1">QQ 通知需要先绑定 QQ 号并添加 Bot 好友才能收到；实际可推送渠道以管理员后台设置为准</p>
                 {prefsMsg && <p className={`text-xs ${prefsMsg === '已保存' ? 'text-green-600' : 'text-destructive'}`}>{prefsMsg}</p>}
               </div>
             </details>

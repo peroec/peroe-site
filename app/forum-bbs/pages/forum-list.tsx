@@ -1,6 +1,6 @@
 import { useLoaderData, type LoaderFunctionArgs } from "react-router";
 import ForumPage, { type ForumInitialData } from "@/forum-bbs/app/page";
-import { getPosts, getCategories } from "@/forum-bbs/lib/forum/api/client";
+import { getPosts, getCategories, getAnnouncements } from "@/forum-bbs/lib/forum/api/client";
 import { useSeo } from "@/forum-bbs/lib/seo/use-seo";
 
 const PER_PAGE = 20;
@@ -30,6 +30,7 @@ export async function clientLoader({ request }: LoaderFunctionArgs): Promise<For
     apiError = "网络错误，请检查连接后重试";
   }
   const categories = await getCategories().catch(() => []);
+  const announcements = await getAnnouncements().catch(() => undefined);
 
   return {
     posts: posts.data,
@@ -41,6 +42,7 @@ export async function clientLoader({ request }: LoaderFunctionArgs): Promise<For
     categories,
     pageSize: PER_PAGE,
     apiError,
+    announcements,
   };
 }
 clientLoader.hydrate = true as const;

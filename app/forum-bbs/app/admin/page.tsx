@@ -25,6 +25,14 @@ import {
   scanAdminStorageGc,
   cleanupAdminStorageGc,
   sendAdminTestEmail,
+  getAdminAnnouncements,
+  createAdminAnnouncement,
+  updateAdminAnnouncement,
+  deleteAdminAnnouncement,
+  publishAdminAnnouncement,
+  getAdminChannelPolicy,
+  saveAdminChannelPolicy,
+  type ChannelPolicy,
 } from '@/forum-bbs/lib/forum/api/client';
 import { toast } from 'sonner';
 import type { AdminStats } from '@/forum-bbs/lib/forum/types';
@@ -166,6 +174,164 @@ function EmailTestSection() {
             return <div key={i}>{opt?.label || String(r.template)}: {r.success ? '✓' : '✗'} {String(r.message || r.error || '')}</div>;
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+// ── 公告管理 ──
+
+interface AdminAnnouncementRow {
+  id: number;
+  title: string;
+  content: string;
+  is_published: boolean;
+  created_at: string;
+}
+
+const POLICY_TYPE_LABELS: Record<string, string> = {
+  announcement: '全服公告',
+  verify: '账号安全（验证码等）',
+  notification: '普通通知（评论/回复/管理）',
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  email: '邮箱',
+  qq: 'QQ',
+};
+
+function AnnouncementsSection() {
+  const [list, setList] = useState<AdminAnnouncementRow[]>([]);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [publishNow, setPublishNow] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [publishingId, setPublishingId] = useState<number | null>(null);
+
+  const load = useCallback(async () => {
+    try { setList((await getAdminAnnouncements()) as unknown as AdminAnnouncementRow[]); } catch {}
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
+      <h2 className="font-semibold">公告管理</h2>
+      <p className="text-xs text-muted-foreground">
+        发布公告将按「渠道推送策略」推送给订阅用户（QQ / 邮箱，邮箱兜底）。发布后公告会展示在论坛公告栏。
+      </p>
+      <div className="space-y-2">
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="公告标题" maxLength={100} className="w-full h-9 px-3 rounded-lg border bg-background text-sm" />
+        <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="公告内容" maxLength={5000} rows={3} className="w-full px-3 py-2 rounded-lg border bg-background text-sm resize-none" />
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+            <Checkbox checked={publishNow} onCheckedChange={(v) => setPublishNow(!!v)} />
+            立即发布并推送
+          </label>
+          <Button size="sm" disabled={saving || !title.trim() || !content.trim()} onClick={async () => {
+            setSaving(true);
+            try {
+              const r = await createAdminAnnouncement({ title: title.trim(), content: content.trim(), isPublished: publishNow });
+              setTitle(''); setContent(''); setPublishNow(false);
+              toast.success(publishNow ? '已创建并发布' : '已创建（草稿）');
+              if (publishNow && r.id) {
+                const p = await publishAdminAnnouncement(String(r.id));
+                toast.success(`已推送给 ${p.pushed ?? 0} 位用户`);
+              }
+              load();
+            } catch { toast.error('创建失败'); }
+            setSaving(false);
+          }}>{saving ? '保存中…' : publishNow ? '创建并发布' : '创建草稿'}</Button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {list.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-3">暂无公告</p>
+        ) : (
+          list.map((a) => (
+            <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 border border-border rounded-lg p-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-sm font-medium truncate">{a.title}</span>
+                  {a.is_published
+                    ? <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full shrink-0">已发布</span>
+                    : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full shrink-0">草稿</span>}
+                </div>
+                <p className="text-xs text-muted-foreground truncate mt-0.5">{a.content.slice(0, 60)}</p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                {!a.is_published && (
+                  <Button size="sm" variant="ghost" disabled={publishingId === a.id} onClick={async () => {
+                    setPublishingId(a.id);
+                    try {
+                      const r = await publishAdminAnnouncement(String(a.id));
+                      toast.success(`已发布并推送给 ${r.pushed ?? 0} 位用户`);
+                      load();
+                    } catch { toast.error('发布失败'); }
+                    setPublishingId(null);
+                  }}>{publishingId === a.id ? '发布中…' : '发布并推送'}</Button>
+                )}
+                <Button size="sm" variant="ghost" className="text-red-500" onClick={async () => {
+                  if (!confirm(`删除公告「${a.title}」？`)) return;
+                  try { await deleteAdminAnnouncement(String(a.id)); load(); } catch { toast.error('删除失败'); }
+                }}>删除</Button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── 渠道推送策略（权限矩阵）──
+
+function ChannelPolicySection() {
+  const [policy, setPolicy] = useState<ChannelPolicy | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setPolicy(await getAdminChannelPolicy()); } catch {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  return (
+    <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
+      <h2 className="font-semibold">渠道推送策略</h2>
+      <p className="text-xs text-muted-foreground">
+        勾选决定每个推送渠道可以推送哪类通知。用户侧只能选择「矩阵允许 ∩ 已绑定」的渠道；邮箱为最终兜底渠道。
+      </p>
+      {loading ? (
+        <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+      ) : policy ? (
+        <>
+          <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 gap-y-2 text-xs text-muted-foreground">
+            <span>通知类型</span><span className="text-center">邮箱</span><span className="text-center">QQ</span>
+            {Object.entries(POLICY_TYPE_LABELS).map(([type, label]) => (
+              <div key={type} className="contents">
+                <span>{label}</span>
+                <span className="text-center">
+                  <Checkbox checked={policy.email?.[type as keyof ChannelPolicy['email']] ?? false} onCheckedChange={(v) => setPolicy((p) => p ? { ...p, email: { ...p.email, [type]: !!v } as ChannelPolicy['email'] } : p)} />
+                </span>
+                <span className="text-center">
+                  <Checkbox checked={policy.qq?.[type as keyof ChannelPolicy['qq']] ?? false} onCheckedChange={(v) => setPolicy((p) => p ? { ...p, qq: { ...p.qq, [type]: !!v } as ChannelPolicy['qq'] } : p)} />
+                </span>
+              </div>
+            ))}
+          </div>
+          <Button size="sm" disabled={saving} onClick={async () => {
+            if (!policy) return;
+            setSaving(true);
+            try { await saveAdminChannelPolicy(policy); toast.success('策略已保存'); } catch { toast.error('保存失败'); }
+            setSaving(false);
+          }}>{saving ? '保存中…' : '保存策略'}</Button>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">加载失败</p>
       )}
     </div>
   );
@@ -398,6 +564,12 @@ const currentUserId = user?.id;
           </>
         )}
       </div>
+
+      {/* 渠道推送策略 */}
+      <ChannelPolicySection />
+
+      {/* 公告管理 */}
+      <AnnouncementsSection />
 
       {/* S3 GC */}
       <S3GcSection />

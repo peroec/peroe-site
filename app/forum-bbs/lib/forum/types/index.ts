@@ -103,3 +103,17 @@ export interface ApiListResult<T> {
 
 export type SortOption = 'latest' | 'oldest' | 'likes' | 'comments' | 'views';
 export type CommentSort = 'hot' | 'latest' | 'oldest';
+
+/** 公告（公开接口返回） */
+export interface ForumAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  created_at: string;
+}
+
+/** 渠道推送策略（权限矩阵：渠道 × 通知大类） */
+export type NotifyChannel = 'email' | 'qq';
+export type PolicyType = 'announcement' | 'verify' | 'notification';
+
+export type ChannelPolicy = Record<NotifyChannel, Record<PolicyType, boolean>>;

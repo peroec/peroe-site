@@ -18,7 +18,7 @@ import { useForumAuth } from '@/forum-bbs/lib/forum/stores/auth';
 import { track } from '@/forum-bbs/lib/track';
 import { RoleBadge } from '@/forum-bbs/components/forum-role-badge';
 import { withBase } from '@/forum-bbs/lib/base-path';
-import type { ForumPostSummary, ForumCategory, SortOption } from '@/forum-bbs/lib/forum/types';
+import type { ForumPostSummary, ForumCategory, SortOption, ForumAnnouncement } from '@/forum-bbs/lib/forum/types';
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: 'latest', label: '最新发布' },
@@ -125,6 +125,7 @@ export interface ForumInitialData {
   categories: ForumCategory[];
   pageSize: number;
   apiError?: string;
+  announcements?: ForumAnnouncement[];
 }
 
 /**
@@ -144,7 +145,7 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
   const navigation = useNavigation();
   const { user, logout } = useForumAuth();
 
-  const { posts, total, page, search, sort, category, categories, pageSize, apiError } = initial;
+  const { posts, total, page, search, sort, category, categories, pageSize, apiError, announcements } = initial;
   // 只有仍在论坛列表页内的导航才显示骨架（翻页/筛选/搜索），
   // 点击帖子跳转到 /forum/post/:id 时保持列表不变，避免骨架屏闪烁。
   const loading = navigation.state === 'loading' && (navigation.location?.pathname === '/' || navigation.location?.pathname === '/forum' || navigation.location?.pathname === '/forum/');
@@ -235,9 +236,27 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
         </div>
       </div>
 
+      {announcements && announcements.length > 0 && (
+        <div className="mb-4 border border-border rounded-lg overflow-hidden">
+          {announcements.map((a, i) => (
+            <details key={a.id} className={i > 0 ? "border-t border-border" : ""}>
+              <summary className="flex items-center gap-2 px-3 py-2.5 text-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden hover:bg-card">
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400 shrink-0">
+                  <Icon icon="mdi:bullhorn" className="size-3.5" />
+                  公告
+                </span>
+                <span className="font-medium truncate flex-1">{a.title}</span>
+                <span className="text-xs text-muted-foreground shrink-0">{a.created_at?.slice(0, 10)}</span>
+                <Icon icon="mdi:chevron-down" className="size-4 text-muted-foreground shrink-0 transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-3 pb-3 pt-1 text-sm text-muted-foreground whitespace-pre-wrap">{a.content}</div>
+            </details>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-row flex-wrap gap-2 mb-4">
-        {/* GET 表单：无 JS 时回车即可搜索；有 JS 时上面的防抖 effect 自动提交 */}
-        <Form ref={formRef} method="get" action="/forum/" className="flex-1 min-w-[12rem]">
+        {/* GET 表单：无 JS 时回车即可搜索；有 JS 时上面的防抖 effect 自动提交 */}        <Form ref={formRef} method="get" action="/forum/" className="flex-1 min-w-[12rem]">
           {sort !== 'latest' && <input type="hidden" name="sort" value={sort} />}
           {category && <input type="hidden" name="category" value={category} />}
           <input

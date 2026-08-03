@@ -11,7 +11,11 @@ import type {
   ApiListResult,
   SortOption,
   CommentSort,
+  ForumAnnouncement,
+  ChannelPolicy,
 } from '../types';
+
+export type { ChannelPolicy };
 import { track } from '@/forum-bbs/lib/track';
 import { withBase } from '@/forum-bbs/lib/base-path';
 import { stripBase } from '@/forum-bbs/lib/seo/route-meta';
@@ -713,6 +717,10 @@ export interface NotifyPrefs {
   lora?: { email: boolean; qq: boolean };
   recommendation?: { email: boolean; qq: boolean };
   article_update?: { email: boolean; qq: boolean };
+  /** 启用的渠道列表（矩阵允许 ∩ 用户已绑定） */
+  channels?: string[];
+  /** 优先渠道（默认即优先，第一个） */
+  preferred?: string;
 }
 
 export function getNotifyPrefs() {
@@ -723,5 +731,57 @@ export function updateNotifyPrefs(prefs: Partial<NotifyPrefs>) {
   return forumRequest<{ success: boolean }>('/api/user/me/notify-prefs', {
     method: 'POST',
     body: JSON.stringify(prefs),
+  });
+}
+
+// ── 公告 ──
+
+export function getAnnouncements() {
+  return forumRequest<ForumAnnouncement[]>('/api/announcements');
+}
+
+export function getAdminAnnouncements() {
+  return forumRequest<Record<string, unknown>[]>('/api/admin/announcements');
+}
+
+export function createAdminAnnouncement(payload: { title: string; content: string; isPublished?: boolean }) {
+  return forumRequest<{ success: boolean; id?: number }>('/api/admin/announcements', {
+    method: 'POST',
+    body: JSON.stringify({
+      title: payload.title,
+      content: payload.content,
+      is_published: payload.isPublished,
+    }),
+  });
+}
+
+export function updateAdminAnnouncement(id: string, payload: { title?: string; content?: string }) {
+  return forumRequest<{ success: boolean }>(`/api/admin/announcements/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteAdminAnnouncement(id: string) {
+  return forumRequest<{ success: boolean }>(`/api/admin/announcements/${id}`, { method: 'DELETE' });
+}
+
+export function publishAdminAnnouncement(id: string) {
+  return forumRequest<{ success: boolean; pushed?: number; total?: number }>(
+    `/api/admin/announcements/${id}/publish`,
+    { method: 'POST', body: '{}' },
+  );
+}
+
+// ── 渠道推送策略（权限矩阵）──
+
+export function getAdminChannelPolicy() {
+  return forumRequest<ChannelPolicy>('/api/admin/channel-policy');
+}
+
+export function saveAdminChannelPolicy(policy: ChannelPolicy) {
+  return forumRequest<{ success: boolean }>('/api/admin/channel-policy', {
+    method: 'POST',
+    body: JSON.stringify(policy),
   });
 }
