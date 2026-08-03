@@ -3,24 +3,25 @@
 @theme {
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
     Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --color-background: #0a0a0a;
+  /* 偏灰深色背景（对齐原站 oklch(0.205)≈#171717，避免纯黑） */
+  --color-background: #171717;
   --color-foreground: #ededed;
-  --color-card: #141414;
-  --color-card-hover: #1a1a1a;
-  --color-border: #262626;
+  --color-card: #1f1f1f;
+  --color-card-hover: #242424;
+  --color-border: #2e2e2e;
   --color-muted: #a3a3a3;
   --color-muted-2: #737373;
   --color-accent: #e11d48;
   /* 论坛（forum-bbs）所需，原 2xss_bbs 主题变量 */
   --color-primary: #ededed;
   --color-primary-foreground: #171717;
-  --color-secondary: #262626;
+  --color-secondary: #2e2e2e;
   --color-secondary-foreground: #ededed;
   --color-muted-foreground: #a3a3a3;
   --color-card-foreground: #ededed;
-  --color-popover: #141414;
+  --color-popover: #1f1f1f;
   --color-popover-foreground: #ededed;
-  --color-input: #262626;
+  --color-input: #2e2e2e;
   --color-ring: #404040;
   --color-destructive: #ef4444;
   --color-accent-foreground: #ededed;
@@ -61,17 +62,47 @@ body {
 .prose-dark strong { color: #fff; font-weight: 700; }
 .prose-dark em { color: #e5e5e5; }
 .prose-dark del { color: #737373; }
+/* 代码高亮：Atom One Dark（与论坛版 hljs.css 同一套，保证两站风格统一） */
+.prose-dark .hljs {
+  color: #abb2bf;
+  background: transparent;
+}
+.prose-dark .hljs-comment,
+.prose-dark .hljs-quote { color: #868c96; font-style: italic; }
+.prose-dark .hljs-doctag,
 .prose-dark .hljs-keyword,
+.prose-dark .hljs-formula { color: #c678dd; }
+.prose-dark .hljs-section,
+.prose-dark .hljs-name,
 .prose-dark .hljs-selector-tag,
-.prose-dark .hljs-literal,
-.prose-dark .hljs-type { color: #cba6f7; }
+.prose-dark .hljs-deletion,
+.prose-dark .hljs-subst { color: #e06c75; }
+.prose-dark .hljs-literal { color: #56b6c2; }
 .prose-dark .hljs-string,
+.prose-dark .hljs-regexp,
+.prose-dark .hljs-addition,
+.prose-dark .hljs-attribute,
+.prose-dark .hljs-meta .hljs-string { color: #98c379; }
 .prose-dark .hljs-attr,
-.prose-dark .hljs-symbol { color: #a6e3a1; }
-.prose-dark .hljs-title,
-.prose-dark .hljs-title.function_ { color: #89b4fa; }
-.prose-dark .hljs-comment { color: #6c7086; }
-.prose-dark .hljs-number { color: #fab387; }
+.prose-dark .hljs-variable,
+.prose-dark .hljs-template-variable,
+.prose-dark .hljs-type,
+.prose-dark .hljs-selector-class,
+.prose-dark .hljs-selector-attr,
+.prose-dark .hljs-selector-pseudo,
+.prose-dark .hljs-number { color: #d19a66; }
+.prose-dark .hljs-symbol,
+.prose-dark .hljs-bullet,
+.prose-dark .hljs-link,
+.prose-dark .hljs-meta,
+.prose-dark .hljs-selector-id,
+.prose-dark .hljs-title { color: #61aeee; }
+.prose-dark .hljs-built_in,
+.prose-dark .hljs-title.class_,
+.prose-dark .hljs-class .hljs-title { color: #e6c07b; }
+.prose-dark .hljs-emphasis { font-style: italic; }
+.prose-dark .hljs-strong { font-weight: bold; }
+.prose-dark .hljs-link { text-decoration: underline; }
 .prose-dark h1,
 .prose-dark h2,
 .prose-dark h3,

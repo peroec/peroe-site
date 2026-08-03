@@ -1,0 +1,221 @@
+/* 论坛（forum-bbs）专属样式：从原 2xss_bbs globals.css 提取组件级规则。
+   注意：不引入 :root 变量覆盖、body/html/* 全局规则——那些会破坏主站布局。
+   论坛背景/主题变量由主站 app.css 提供（#171717 偏灰，两站统一）。 */
+
+/* ── 代码块（头部一行 + 代码一行，见 render-markdown.ts） ── */
+.code-block { margin: 1.3125rem 0; }
+.code-block > pre.hljs { margin: 0; }
+
+.code-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+.code-icon { width: 1.15em; height: 1.15em; flex: none; }
+
+.code-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: lowercase;
+}
+
+.code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 2px 4px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.code-copy:hover,
+.code-copy:focus-visible { color: var(--foreground); }
+
+.code-icon-copied { display: none; }
+.code-copy.is-copied { color: var(--foreground); }
+.code-copy.is-copied .code-icon-copy { display: none; }
+.code-copy.is-copied .code-icon-copied { display: block; }
+
+/* ── 骨架屏：45° 斜纹滚动 ── */
+@keyframes shell-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.shell-skeleton {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: oklch(0.24 0 0);
+}
+.shell-skeleton::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 0 -14px;
+  background-image: linear-gradient(
+    135deg,
+    oklch(0.36 0 0) 25%,
+    oklch(0.24 0 0) 25%,
+    oklch(0.24 0 0) 50%,
+    oklch(0.36 0 0) 50%,
+    oklch(0.36 0 0) 75%,
+    oklch(0.24 0 0) 75%
+  );
+  background-size: 14px 14px;
+  animation: shell-scan 1.2s linear infinite;
+  will-change: transform;
+}
+@keyframes shell-scan {
+  from { transform: translateX(0); }
+  to { transform: translateX(14px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-skeleton::before { animation: none; }
+}
+
+/* ── 加载指示器：三方形点依次点亮 ── */
+.shell-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.shell-spinner > span {
+  width: 26%;
+  aspect-ratio: 1;
+  background: currentColor;
+  animation: shell-spinner-dot 0.9s infinite;
+}
+.shell-spinner > span:nth-child(2) { animation-delay: 0.3s; }
+.shell-spinner > span:nth-child(3) { animation-delay: 0.6s; }
+@keyframes shell-spinner-dot {
+  0%, 32% { opacity: 1; }
+  33%, 100% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell-spinner > span { animation: none; opacity: 1; }
+}
+
+/* ── 抽屉/面板动画 ── */
+@keyframes shell-slide-in-right { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes shell-slide-in-left  { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes shell-slide-in-top   { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+@keyframes shell-slide-in-bottom { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.shell-slide-right { animation: shell-slide-in-right 200ms cubic-bezier(0, 0.55, 0.15, 1); }
+.shell-slide-left  { animation: shell-slide-in-left  200ms cubic-bezier(0, 0.55, 0.15, 1); }
+.shell-slide-top   { animation: shell-slide-in-top   200ms cubic-bezier(0, 0.55, 0.15, 1); }
+.shell-slide-bottom { animation: shell-slide-in-bottom 200ms cubic-bezier(0, 0.55, 0.15, 1); }
+
+@keyframes shell-slide-out-right { from { transform: translateX(0); } to { transform: translateX(100%); } }
+@keyframes shell-slide-out-left  { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@keyframes shell-slide-out-top   { from { transform: translateY(0); } to { transform: translateY(-100%); } }
+@keyframes shell-slide-out-bottom { from { transform: translateY(0); } to { transform: translateY(100%); } }
+.shell-slide-out-right { animation: shell-slide-out-right 200ms cubic-bezier(0, 0.55, 0.15, 1); }
+.shell-slide-out-left  { animation: shell-slide-out-left  200ms cubic-bezier(0, 0.55, 0.15, 1); }
+.shell-slide-out-top   { animation: shell-slide-out-top   200ms cubic-bezier(0, 0.55, 0.15, 1); }
+.shell-slide-out-bottom { animation: shell-slide-out-bottom 200ms cubic-bezier(0, 0.55, 0.15, 1); }
+
+[data-slot="sheet"]::backdrop { background: oklch(0 0 0 / 0.7); }
+.shell-slide-right::backdrop,
+.shell-slide-left::backdrop,
+.shell-slide-top::backdrop,
+.shell-slide-bottom::backdrop {
+  animation: shell-backdrop-in 200ms cubic-bezier(0, 0.55, 0.15, 1) forwards;
+}
+.shell-slide-out-right::backdrop,
+.shell-slide-out-left::backdrop,
+.shell-slide-out-top::backdrop,
+.shell-slide-out-bottom::backdrop {
+  animation: shell-backdrop-out 200ms cubic-bezier(0, 0.55, 0.15, 1) forwards;
+}
+@keyframes shell-backdrop-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes shell-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-slide-right,
+  .shell-slide-left,
+  .shell-slide-top,
+  .shell-slide-bottom,
+  .shell-slide-out-right,
+  .shell-slide-out-left,
+  .shell-slide-out-top,
+  .shell-slide-out-bottom {
+    animation: none !important;
+  }
+  .shell-slide-right::backdrop,
+  .shell-slide-left::backdrop,
+  .shell-slide-top::backdrop,
+  .shell-slide-bottom::backdrop,
+  .shell-slide-out-right::backdrop,
+  .shell-slide-out-left::backdrop,
+  .shell-slide-out-top::backdrop,
+  .shell-slide-out-bottom::backdrop {
+    animation: none !important;
+    opacity: 1;
+  }
+  [data-slot="sheet-content"],
+  [data-slot="dialog-content"],
+  [data-slot="dropdown-menu-content"] {
+    animation: none !important;
+  }
+}
+
+/* ── 原生 range 滑杆（终端 fader 风格） ── */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 16px;
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: oklch(0.42 0 0);
+  border-radius: 0;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 16px;
+  margin-top: -6px;
+  background: var(--foreground);
+  border: none;
+  border-radius: 0;
+}
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: oklch(0.42 0 0);
+  border-radius: 0;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 8px;
+  height: 16px;
+  background: var(--foreground);
+  border: none;
+  border-radius: 0;
+}
+input[type="range"]:disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* ── 正文图片可点击放大 ── */
+.prose img:not([data-no-lightbox]) { cursor: zoom-in; }
+
+/* ── 方形滚动条 ── */
+* { scrollbar-color: oklch(0.5 0 0) var(--background); }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: oklch(0.5 0 0); border: 2px solid var(--background); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: oklch(0.72 0 0); }

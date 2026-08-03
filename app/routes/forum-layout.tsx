@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import "@/forum-bbs/styles/hljs.css";
+import "@/forum-bbs/styles/forum-extra.css";
 import { ThemeProvider } from "@/forum-bbs/components/theme/ThemeProvider";
 import { ForumAuthProvider } from "@/forum-bbs/lib/forum/stores/auth";
 import { Toaster } from "@/forum-bbs/components/ui/sonner";
