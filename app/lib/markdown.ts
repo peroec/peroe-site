@@ -1,5 +1,13 @@
 import { marked } from "marked";
 import hljs from "highlight.js/lib/common";
+// common 集合未覆盖的博客常用语言：powershell/nginx/http（补注册后才有高亮）
+import powershell from "highlight.js/lib/languages/powershell";
+import nginx from "highlight.js/lib/languages/nginx";
+import http from "highlight.js/lib/languages/http";
+
+for (const [name, lang] of Object.entries({ powershell, nginx, http })) {
+  hljs.registerLanguage(name, lang);
+}
 
 /**
  * 博客 Markdown 渲染（对齐 2x.nz 线上格式）：
@@ -102,10 +110,17 @@ const ext = marked.use({
         return `<div class="mermaid">${escapeHtml(text)}</div>\n`;
       }
       const language = typeof lang === "string" && hljs.getLanguage(lang) ? lang : "plaintext";
-      const highlighted =
-        language === "plaintext"
-          ? escapeHtml(text)
-          : hljs.highlight(text, { language }).value;
+      let highlighted: string;
+      if (language === "plaintext") {
+        highlighted = escapeHtml(text);
+      } else {
+        try {
+          // ignoreIllegals：代码含非法 token 时高亮不抛异常（对齐论坛版行为）
+          highlighted = hljs.highlight(text, { language, ignoreIllegals: true }).value;
+        } catch {
+          highlighted = escapeHtml(text);
+        }
+      }
       const langLabel = lang ? `<span class="code-lang">${escapeHtml(lang)}</span>` : "";
       return `<div class="code-block"><div class="code-head">${langLabel}<button type="button" class="code-copy" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copy" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copied" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span class="code-copy-label">copy</span></button></div><pre><code class="language-${language} hljs">${highlighted}</code></pre></div>`;
     },
