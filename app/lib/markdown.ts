@@ -29,6 +29,18 @@ const CALLOUT_TYPES: Record<string, string> = {
   SUCCESS: "success",
 };
 
+/** 类型 → 中文标题（对齐本地博客 ALERT_STYLES） */
+const CALLOUT_TITLES: Record<string, string> = {
+  note: "注意",
+  tip: "提示",
+  important: "重要",
+  warning: "警告",
+  caution: "危险",
+  info: "信息",
+  danger: "危险",
+  success: "成功",
+};
+
 const CALLOUT_ICONS: Record<string, string> = {
   note: "ℹ️",
   info: "ℹ️",
@@ -67,17 +79,29 @@ const ext = marked.use({
         return m ? m.index! : -1;
       },
       tokenizer(src: string) {
+        // 支持两种写法（对齐本地博客 remark-github-alerts）：
+        //   1) > [!CAUTION] 直接跟正文 → 标题用类型中文名，正文是标记后文本
+        //   2) > [!CAUTION] 独占一行，正文在后续行
+        // 正文行：以 > 开头；遇空行或下一个 [! 标记停止（避免吞掉后续 callout）
         const match = src.match(
-          /^\s*(\[!([A-Z]+)\])\s*([^\n]*)(?:\n((?:\s*>.*\n?)*))?/
+          /^\s*>?\s*(\[!([A-Z]+)\])([ \t]*)([^\n]*)(?:\n((?:\s*> *(?:[^\n]*))*(?:\n|$)))?/
         );
         if (!match) return undefined;
         const type = (match[2] || "NOTE").toLowerCase();
-        const title = match[3]?.trim() || CALLOUT_TYPES[type] || type;
-        let body = match[4] || "";
+        const inlineRest = match[4]?.trim() || "";
+        const title = CALLOUT_TITLES[type] || type;
+        let body = match[5] || "";
+        // 停止条件：下一行是 [! 开头（新 callout）→ 截断；body 不包含后续 callout
+        const nextCallout = body.match(/\n\s*>?\s*\[!/);
+        if (nextCallout) body = body.slice(0, nextCallout.index);
         body = body
           .split("\n")
           .map((line) => (line.startsWith(">") ? line.replace(/^\s*>/, "") : line))
           .join("\n");
+        // 标记后直接跟正文（如 "> [!CAUTION] 本文使用 DeepSeek..."）：正文从标记后开始
+        if (inlineRest) {
+          body = (inlineRest + "\n" + body).trim();
+        }
         return {
           type: "callout",
           raw: match[0],
