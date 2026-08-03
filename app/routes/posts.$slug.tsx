@@ -62,36 +62,35 @@ function Article({ html }: { html: string }) {
       }
     }, 500);
 
-    // 代码复制
-    const copyButtons = root.querySelectorAll<HTMLButtonElement>(".code-copy");
-    const onCopy = (e: MouseEvent) => {
-      const btn = e.currentTarget as HTMLButtonElement;
-      const pre = btn.closest(".code-block")?.querySelector("pre code");
-      if (!pre) return;
-      const text = pre.textContent || "";
-      navigator.clipboard?.writeText(text).catch(() => {});
-      btn.classList.add("copied");
-      setTimeout(() => btn.classList.remove("copied"), 2000);
+    // 代码复制 + 图片 lightbox：用事件委托绑定到 document，
+    // 免疫水合后 DOM 替换（绑定到具体元素会被 React 重置掉）
+    const onDocClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const copyBtn = target.closest?.(".code-copy") as HTMLButtonElement | null;
+      if (copyBtn) {
+        const pre = copyBtn.closest(".code-block")?.querySelector("pre code");
+        if (!pre) return;
+        const text = pre.textContent || "";
+        navigator.clipboard?.writeText(text).catch(() => {});
+        copyBtn.classList.add("copied");
+        setTimeout(() => copyBtn.classList.remove("copied"), 2000);
+        return;
+      }
+      const img = target.closest?.("img[data-lightbox]") as HTMLImageElement | null;
+      if (img) {
+        const overlay = document.createElement("div");
+        overlay.className = "lightbox";
+        overlay.innerHTML = `<img src="${img.src}" alt="${img.alt || ""}" />`;
+        overlay.addEventListener("click", () => overlay.remove());
+        document.body.appendChild(overlay);
+      }
     };
-    copyButtons.forEach((btn) => btn.addEventListener("click", onCopy));
-
-    // 图片 lightbox
-    const imgs = root.querySelectorAll<HTMLImageElement>("img[data-lightbox]");
-    const onImgClick = (e: MouseEvent) => {
-      const img = e.currentTarget as HTMLImageElement;
-      const overlay = document.createElement("div");
-      overlay.className = "lightbox";
-      overlay.innerHTML = `<img src="${img.src}" alt="${img.alt || ""}" />`;
-      overlay.addEventListener("click", () => overlay.remove());
-      document.body.appendChild(overlay);
-    };
-    imgs.forEach((img) => img.addEventListener("click", onImgClick));
+    document.addEventListener("click", onDocClick);
 
     return () => {
       cancelled = true;
       clearTimeout(timer);
-      copyButtons.forEach((btn) => btn.removeEventListener("click", onCopy));
-      imgs.forEach((img) => img.removeEventListener("click", onImgClick));
+      document.removeEventListener("click", onDocClick);
     };
   }, [html]);
 
