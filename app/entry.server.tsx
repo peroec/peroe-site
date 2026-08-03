@@ -30,10 +30,13 @@ export default async function handleRequest(
     },
   );
 
-  // 必须等待 allReady：ServerRouter 内部用 Suspense（StreamTransfer），
-  // 若不等 allReady，入口 module 脚本会留在流数据里，浏览器只 append 文本不执行
-  // → 客户端 JS 全不跑（无水合/TOC/Giscus/umami）。等待后脚本直接进 HTML。
-  await body.allReady;
+  // 浏览器请求：立即返回 shell（module script 在 shell 内，浏览器正常执行）
+  // 爬虫 / SPA 模式：等待全部内容渲染完成再响应
+  const userAgent = request.headers.get("user-agent");
+  const isBot = (userAgent && /bot|crawl|spider|slurp|bingbot|googlebot/i.test(userAgent)) || routerContext.isSpaMode;
+  if (isBot) {
+    await body.allReady;
+  }
 
   responseHeaders.set("Content-Type", "text/html");
   return new Response(body, {
