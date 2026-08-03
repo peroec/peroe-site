@@ -124,6 +124,7 @@ export interface ForumInitialData {
   category: string;
   categories: ForumCategory[];
   pageSize: number;
+  apiError?: string;
 }
 
 /**
@@ -143,7 +144,7 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
   const navigation = useNavigation();
   const { user, logout } = useForumAuth();
 
-  const { posts, total, page, search, sort, category, categories, pageSize } = initial;
+  const { posts, total, page, search, sort, category, categories, pageSize, apiError } = initial;
   // 只有仍在论坛列表页内的导航才显示骨架（翻页/筛选/搜索），
   // 点击帖子跳转到 /forum/post/:id 时保持列表不变，避免骨架屏闪烁。
   const loading = navigation.state === 'loading' && (navigation.location?.pathname === '/' || navigation.location?.pathname === '/forum' || navigation.location?.pathname === '/forum/');
@@ -286,6 +287,21 @@ function ForumContent({ initial }: { initial: ForumInitialData }) {
         </div>
       ) : (
         <>
+          {apiError && (
+            <div className="mb-5 border border-red-400/60 bg-red-950/20 px-4 py-4 text-sm text-red-300">
+              <p className="font-medium">页面出错，网络错误，请检查连接后重试。</p>
+              <p className="mt-1 text-xs text-red-300/80">
+                如果你切换到了本地后端，请先启动 127.0.0.1:8787；也可以点击上方“论坛”标题切回生产环境。
+              </p>
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="mt-3 border border-red-300/60 px-3 py-1.5 text-xs text-red-200 hover:bg-red-400/10"
+              >
+                重新加载
+              </button>
+            </div>
+          )}
           <p className="text-xs text-muted-foreground mb-3">共 {total} 个帖子</p>
           {posts.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">暂无帖子</p>

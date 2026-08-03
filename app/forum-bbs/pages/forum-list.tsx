@@ -21,11 +21,15 @@ export async function clientLoader({ request }: LoaderFunctionArgs): Promise<For
   const sort = url.searchParams.get("sort") || "latest";
   const category = url.searchParams.get("category") || "";
 
-  const [posts, categories] = await Promise.all([
-    getPosts({ page, pageSize: PER_PAGE, search, sort, category }),
-    // 分类拉挂了只是筛选器空一栏，不该把整页拖成错误页
-    getCategories().catch(() => []),
-  ]);
+  let posts: { data: ForumInitialData["posts"]; total: number } = { data: [], total: 0 };
+  let apiError = "";
+  try {
+    posts = await getPosts({ page, pageSize: PER_PAGE, search, sort, category });
+  } catch {
+    // API 不可达时仍渲染页面，让用户能打开环境设置切回生产后端。
+    apiError = "网络错误，请检查连接后重试";
+  }
+  const categories = await getCategories().catch(() => []);
 
   return {
     posts: posts.data,
@@ -36,6 +40,7 @@ export async function clientLoader({ request }: LoaderFunctionArgs): Promise<For
     category,
     categories,
     pageSize: PER_PAGE,
+    apiError,
   };
 }
 clientLoader.hydrate = true as const;
