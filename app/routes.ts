@@ -15,7 +15,7 @@ export default [
     route("auth/reset-password", "routes/forum-page-reset.tsx"),
     route("auth/authorize", "routes/forum-page-authorize.tsx"),
     route("me", "routes/forum-page-me.tsx"),
-    route("u", "routes/forum-page-user.tsx"),
+    route("u/:id", "routes/forum-page-user.tsx"),
     route("admin", "routes/forum-page-admin.tsx"),
     route("agree", "routes/forum-page-agree.tsx"),
     route("privacy", "routes/forum-page-privacy.tsx"),
