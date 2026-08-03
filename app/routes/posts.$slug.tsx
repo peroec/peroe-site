@@ -39,28 +39,36 @@ function Article({ html }: { html: string }) {
     let cancelled = false;
 
     // 客户端代码高亮：SSR 只输出纯文本 + data-highlight 标记，这里动态高亮。
-    // 延迟到水合 commit 完全稳定后再执行（立即执行会被 React 的
-    // dangerouslySetInnerHTML 重置覆盖）；重新查询避免 StrictMode 双挂载下
-    // 闭包 NodeList 指向已 detached 的 DOM
-    const timer = window.setTimeout(() => {
+    // 用 MutationObserver 等 DOM 稳定（React 水合/dangerouslySetInnerHTML
+    // 连续 300ms 无变化）后再执行，避免固定延迟在不同环境加载时序下失效。
+    const doHighlight = () => {
       const current = document.querySelectorAll<HTMLElement>("[data-article] code[data-highlight]");
-      if (current.length > 0) {
-        try {
-          hljs.registerLanguage("powershell", powershell);
-          hljs.registerLanguage("nginx", nginx);
-          hljs.registerLanguage("http", http);
-        } catch (e) {
-          console.error("[hljs] registerLanguage failed:", e);
-        }
-        current.forEach((el) => {
-          const lang = (el.className.match(/language-([\w-]+)/) || [])[1];
-          el.classList.add("hljs");
-          if (lang && hljs.getLanguage(lang)) {
-            hljs.highlightElement(el);
-          }
-        });
+      if (current.length === 0) return;
+      try {
+        hljs.registerLanguage("powershell", powershell);
+        hljs.registerLanguage("nginx", nginx);
+        hljs.registerLanguage("http", http);
+      } catch (e) {
+        console.error("[hljs] registerLanguage failed:", e);
       }
-    }, 500);
+      current.forEach((el) => {
+        const lang = (el.className.match(/language-([\w-]+)/) || [])[1];
+        el.classList.add("hljs");
+        if (lang && hljs.getLanguage(lang)) {
+          hljs.highlightElement(el);
+        }
+      });
+    };
+    let stableTimer = 0;
+    const tryHighlight = () => {
+      if (stableTimer) clearTimeout(stableTimer);
+      stableTimer = window.setTimeout(doHighlight, 300);
+    };
+    tryHighlight();
+    const observer = new MutationObserver(tryHighlight);
+    observer.observe(root, { childList: true, subtree: true, characterData: true });
+    // 3 秒兜底：确保即使观察器漏掉也会高亮一次
+    const fallback = window.setTimeout(doHighlight, 3000);
 
     // 代码复制 + 图片 lightbox：用事件委托绑定到 document，
     // 免疫水合后 DOM 替换（绑定到具体元素会被 React 重置掉）
@@ -89,7 +97,9 @@ function Article({ html }: { html: string }) {
 
     return () => {
       cancelled = true;
-      clearTimeout(timer);
+      observer.disconnect();
+      clearTimeout(stableTimer);
+      clearTimeout(fallback);
       document.removeEventListener("click", onDocClick);
     };
   }, [html]);
