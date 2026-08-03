@@ -97,6 +97,10 @@ const ext = marked.use({
       return `<h${depth} id="${id}" class="${size} font-bold text-white mt-10 mb-4 leading-snug">${safeText}</h${depth}>`;
     },
     code({ text, lang }: any) {
+      // mermaid 流程图：输出占位 div，由客户端 MermaidContent 懒加载渲染（与论坛一致）
+      if (lang === "mermaid") {
+        return `<div class="mermaid">${escapeHtml(text)}</div>\n`;
+      }
       const language = typeof lang === "string" && hljs.getLanguage(lang) ? lang : "plaintext";
       const highlighted =
         language === "plaintext"

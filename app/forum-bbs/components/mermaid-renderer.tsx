@@ -72,9 +72,15 @@ if (typeof document !== 'undefined' && document.querySelector('[data-mermaid-idx
 export const MermaidContent = memo(function MermaidContent({
   html,
   className,
+  as: Tag = "div",
+  containerProps,
 }: {
   html: string;
   className?: string;
+  /** 容器标签（默认 div；博客正文用 article 保持语义） */
+  as?: keyof React.JSX.IntrinsicElements;
+  /** 透传给容器的额外属性（如 data-article） */
+  containerProps?: Record<string, unknown>;
 }) {
   const { cleanHtml, blocks } = useMemo(() => extractMermaidBlocks(html), [html]);
 
@@ -107,9 +113,11 @@ export const MermaidContent = memo(function MermaidContent({
 
   if (!html) return null;
 
+  const Container = Tag as React.ElementType;
   return (
-    <div
+    <Container
       className={className}
+      {...containerProps}
       dangerouslySetInnerHTML={{ __html: cleanHtml }}
     />
   );

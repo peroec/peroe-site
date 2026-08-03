@@ -9,6 +9,7 @@ import {
   extractArticleHeadings,
 } from "~/components/ArticleTableOfContents";
 import { Giscus } from "~/components/Giscus";
+import { MermaidContent } from "~/forum-bbs/components/mermaid-renderer";
 
 export function meta({ loaderData }: Route.MetaArgs) {
   if (!loaderData?.post) return [{ title: "文章不存在 | peroe" }];
@@ -56,7 +57,14 @@ function Article({ html }: { html: string }) {
     };
   }, [html]);
 
-  return <article data-article className="prose-dark" dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <MermaidContent
+      html={html}
+      className="prose-dark"
+      as="article"
+      containerProps={{ "data-article": true }}
+    />
+  );
 }
 
 export default function PostDetail({ loaderData }: Route.ComponentProps) {
