@@ -84,6 +84,8 @@ function MeContent() {
   const [prefsMsg, setPrefsMsg] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  /** 保存结果标志（替代按文案含"成功"判断颜色，避免误判） */
+  const [saveOk, setSaveOk] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ── Email change ──
@@ -196,13 +198,22 @@ function MeContent() {
       p.delete('email_change_token');
       navigate(`/forum/me${p.toString() ? "?" + p.toString() : ""}`, { replace: true });
     }
-    const githubError = searchParams.get('github_error');
-    if (githubError) setSaveMsg(`GitHub 绑定失败: ${githubError}`);
+    // GitHub 绑定结果在 URL hash（#github_bound=1 / #github_error=xxx，后端 oauth.ts 约定），
+    // 不能用 searchParams 读 —— 否则绑定成功/失败提示永不显示（BUG 修复）
+    const hash = window.location.hash;
+    const hashParams = new URLSearchParams(hash.replace(/^#/, ''));
+    const githubError = searchParams.get('github_error') || hashParams.get('github_error');
+    if (githubError) { setSaveMsg(`GitHub 绑定失败: ${githubError}`); setSaveOk(false); }
     // GitHub 绑定成功（#github_bound=1）：重拉用户数据并提示（ISSUES #53）
-    const bound = searchParams.get('github_bound');
+    const bound = searchParams.get('github_bound') || hashParams.get('github_bound');
     if (bound) {
       setSaveMsg('GitHub 已绑定');
+      setSaveOk(true);
       getCurrentUser().then((u) => { setUser(u); setLocalUser(u); }).catch(() => {});
+      if (hashParams.get('github_bound') || hashParams.get('github_error')) {
+        // 清 hash 防刷新重复提示
+        window.history.replaceState({}, '', window.location.pathname + window.location.search);
+      }
       const p = new URLSearchParams(searchParams.toString());
       p.delete('github_bound');
       navigate(`/me${p.toString() ? "?" + p.toString() : ""}`, { replace: true });
@@ -256,8 +267,10 @@ function MeContent() {
       setAvatarUrl(url);
       // B-17：文案含"成功"才走绿色样式，统一改为「上传成功」
       setSaveMsg('头像上传成功，请点击保存资料');
+      setSaveOk(true);
     } catch {
       setSaveMsg('头像上传失败');
+      setSaveOk(false);
     }
   };
 
@@ -278,8 +291,10 @@ function MeContent() {
         region: region || null,
       });
       setSaveMsg('保存成功');
+      setSaveOk(true);
     } catch (e: unknown) {
       setSaveMsg(e instanceof Error ? e.message : '保存失败');
+      setSaveOk(false);
     } finally {
       setSaving(false);
     }
@@ -439,9 +454,10 @@ function MeContent() {
               </DropdownMenu>
             </div>
             <div>
-              <label className="text-sm text-muted-foreground block mb-1">出生年</label>
-              {/* B-26：年份上限动态取当前年份 */}
-              <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} min={1900} max={new Date().getFullYear()} placeholder="2000" />
+              <label className="text-sm text-muted-foreground block mb-1">年龄</label>
+              {/* 与后端校验一致（1-150 的整数，见 user.ts /user/me/profile）：
+                  此前 label 写「出生年」但后端按年龄校验，导致填出生年份保存必失败 */}
+              <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} min={1} max={150} placeholder="25" />
             </div>
           </div>
 
@@ -569,7 +585,7 @@ function MeContent() {
           <Button onClick={saveProfile} disabled={saving} className="w-full">
             {saving ? '保存中…' : '保存资料'}
           </Button>
-          {saveMsg && <p className={`text-xs ${saveMsg.includes('成功') ? 'text-green-600' : 'text-destructive'}`}>{saveMsg}</p>}
+          {saveMsg && <p className={`text-xs ${saveOk ? 'text-green-600' : 'text-destructive'}`}>{saveMsg}</p>}
         </div>
 
         {/* ── Right column ── */}
@@ -630,7 +646,7 @@ function MeContent() {
                 )}
                 <Button variant="outline" size="sm" onClick={async () => {
                   if (!confirm('确定要解绑 GitHub 吗？')) return;
-                  try { await unlinkGithub(); setSaveMsg('已解绑'); } catch (e: unknown) { setSaveMsg(e instanceof Error ? e.message : '解绑失败'); }
+                  try { await unlinkGithub(); setSaveMsg('已解绑'); setSaveOk(true); } catch (e: unknown) { setSaveMsg(e instanceof Error ? e.message : '解绑失败'); setSaveOk(false); }
                 }} disabled={user.hasPassword === false}>解绑 GitHub</Button>
               </>
             ) : (

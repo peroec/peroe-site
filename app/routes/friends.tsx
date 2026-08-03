@@ -16,7 +16,6 @@ const PAGE_SIZE = 12;
 
 export default function Friends() {
   const [params] = useSearchParams();
-  const page = Math.max(1, Number(params.get("page")) || 1);
   const [q, setQ] = useState("");
   // 友链数据：客户端从 fas.060730.xyz/friends.json 拉取（1 小时缓存）
   const { data: allFriends, isLoading, isError } = useFasData<Friend>("/friends.json");
@@ -30,6 +29,8 @@ export default function Friends() {
       )
     : FRIENDS;
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // 页码越界（如 ?page=5 但数据只有 2 页）时 clamp，避免误报"暂无友链"
+  const page = Math.min(Math.max(1, Number(params.get("page")) || 1), totalPages);
   const items = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (

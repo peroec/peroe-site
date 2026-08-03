@@ -567,11 +567,13 @@ export function getForumConfig() {
 // ── Users ──
 
 export function getUserProfile(id: string) {
-  return forumRequest<ForumUser>(`/api/users/${id}`);
+  // 后端返回 snake_case，需走 mapUser 转 camelCase（此前直接透传，字段对不上）
+  return forumRequest<Record<string, unknown>>(`/api/users/${id}`).then(mapUser);
 }
 
 export function getUserPosts(id: string) {
-  return forumRequest<ForumPostSummary[]>(`/api/users/${id}/posts`);
+  // 后端返回 snake_case，走 mapPost 映射（与列表/详情一致）
+  return forumRequest<RawPost[]>(`/api/users/${id}/posts`).then((raw) => raw.map(mapPost));
 }
 
 // ── Admin ──

@@ -30,8 +30,8 @@ interface Settings {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  leftText: "示例",
-  rightText: "文本",
+  leftText: "",
+  rightText: "",
   fontSize: 64,
   fontWeight: 400,
   textColor: "#000000",

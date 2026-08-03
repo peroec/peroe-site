@@ -4,11 +4,11 @@ import type { AnimeItem } from "~/lib/types";
 export function meta() {
   return [
     { title: "追番列表 | peroe" },
-    { name: "description", content: "同步个人 Bangumi 追番列表" },
+    { name: "description", content: "个人追番收藏" },
   ];
 }
 
-/** 追番数据（对应 Bangumi 同步数据，可按需增删） */
+/** 追番数据（手动维护；如需自动同步可接入 Bangumi API：https://api.bgm.tv/v0/users/{name}/collections） */
 const ANIME_LIST: AnimeItem[] = [
   { title: "BanG Dream! It's MyGO!!!!!", desc: "迷子们的乐队故事" },
   { title: "BanG Dream! Ave Mujica", desc: "颂乐人偶" },
@@ -28,7 +28,7 @@ export default function Anime() {
       <header className="mb-10">
         <h1 className="text-2xl font-bold text-white">追番记录</h1>
         <p className="mt-2 text-sm text-muted">
-          同步个人 Bangumi 追番列表，当季在追动漫一览
+          个人追番收藏，手动维护
         </p>
       </header>
 

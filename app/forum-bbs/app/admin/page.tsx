@@ -136,7 +136,8 @@ function S3GcSection() {
 
 function EmailTestSection() {
   const [email, setEmail] = useState('');
-  const [selected, setSelected] = useState<string[]>(TEMPLATE_OPTIONS.map((t) => t.value));
+  // 默认只选基础测试项，避免误点一次发 12 封（邮件测试模板当前统一为测试模板）
+  const [selected, setSelected] = useState<string[]>(['smtp_test']);
   const [sending, setSending] = useState(false);
   const [results, setResults] = useState<Record<string, unknown>[] | null>(null);
 
@@ -430,8 +431,8 @@ function StorageSection() {
 }
 
 export default function ForumAdminPage() {
-  const { user } = useForumAuth();
-const currentUserId = user?.id;
+  const { user, loading: authLoading } = useForumAuth();
+  const currentUserId = user?.id;
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [subCount, setSubCount] = useState(0);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
@@ -555,6 +556,19 @@ const currentUserId = user?.id;
     loadCategories();
     getArticleNotificationsCount().then((r) => setSubCount(r.count)).catch(() => {});
   }, [loadStats, loadSettings, loadCategories]);
+
+  // auth 初始化期间 user 为空：先显示骨架，避免管理员误闪「当前账号不是管理员」
+  if (authLoading) {
+    return (
+      <main className="container mx-auto max-w-2xl px-4 py-12">
+        <div className="space-y-4">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="h-24" />
+          <Skeleton className="h-24" />
+        </div>
+      </main>
+    );
+  }
 
   if (!user || user.role !== 'admin') {
     return (

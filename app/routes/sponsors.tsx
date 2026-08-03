@@ -1,4 +1,3 @@
-import { Heart } from "lucide-react";
 import type { Sponsor } from "~/lib/types";
 import { useFasData } from "~/lib/fas";
 
@@ -24,13 +23,14 @@ export default function Sponsors() {
 
       {/* 赞助方式 */}
       <section className="mb-14 border-b border-border pb-14 text-center">
-        <h2 className="mb-6 text-xl font-semibold text-white">支付宝赞助</h2>
-        <div className="mx-auto flex h-56 w-56 items-center justify-center rounded-lg border border-border bg-card">
-          <div className="text-center text-muted-2">
-            <Heart className="mx-auto mb-2 h-8 w-8" />
-            <p className="text-xs">赞助二维码占位</p>
-          </div>
-        </div>
+        <h2 className="mb-6 text-xl font-semibold text-white">赞助方式</h2>
+        <img
+          src="/img/wx-zfb-card-wx-zfb-card.webp"
+          alt="微信 / 支付宝收款码"
+          className="mx-auto h-56 w-56 rounded-lg border border-border bg-card object-cover"
+          loading="lazy"
+          decoding="async"
+        />
         <p className="mt-5 text-xs text-muted-2">
           如果你是要加群，请前往置顶文章，使用爱发电进行赞助。这里只是纯赞助，无收益。
         </p>
@@ -42,6 +42,8 @@ export default function Sponsors() {
         <p className="py-8 text-center text-sm text-muted">加载中…</p>
       ) : isError ? (
         <p className="py-8 text-center text-sm text-muted">赞助名单加载失败，请稍后重试</p>
+      ) : sponsors.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted">暂无赞助记录</p>
       ) : (
         <div className="grid gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
           {sponsors.map((s) => (

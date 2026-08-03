@@ -437,7 +437,7 @@ export function PostContent({
     return (
       <div className="container mx-auto max-w-3xl px-4 py-8 overflow-x-hidden">
         <p className="mb-6 font-mono text-xs text-muted-foreground">
-          loading post<span className="ml-1 inline-block h-[1em] w-[0.55em] translate-y-px bg-muted-foreground [animation:shell-blink_1s_step-end_infinite]" />
+          加载中…<span className="ml-1 inline-block h-[1em] w-[0.55em] translate-y-px bg-muted-foreground [animation:shell-blink_1s_step-end_infinite]" />
         </p>
         <div className="space-y-4">
           <Skeleton className="h-8 w-2/3" />
