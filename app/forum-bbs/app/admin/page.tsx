@@ -32,7 +32,11 @@ import {
   publishAdminAnnouncement,
   getAdminChannelPolicy,
   saveAdminChannelPolicy,
+  getAdminStorageUsage,
+  getAdminStorageConfig,
   type ChannelPolicy,
+  type StorageUsageResult,
+  type StorageConfigResult,
 } from '@/forum-bbs/lib/forum/api/client';
 import { toast } from 'sonner';
 import type { AdminStats } from '@/forum-bbs/lib/forum/types';
@@ -337,6 +341,94 @@ function ChannelPolicySection() {
   );
 }
 
+// ── 存储用量/配置（多桶）──
+
+function formatBytes(n: number): string {
+  if (n <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let i = 0;
+  let v = n;
+  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  return `${v.toFixed(v >= 100 ? 0 : 1)} ${units[i]}`;
+}
+
+function StorageSection() {
+  const [usage, setUsage] = useState<StorageUsageResult | null>(null);
+  const [config, setConfig] = useState<StorageConfigResult | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [u, cfg] = await Promise.all([getAdminStorageUsage(), getAdminStorageConfig()]);
+      setUsage(u); setConfig(cfg);
+    } catch {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const strategyLabel = usage?.strategy === 'round-robin' ? '轮询（round-robin）' : '按用量比例（least-used）';
+
+  return (
+    <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
+      <h2 className="font-semibold">存储设置（多桶）</h2>
+      <p className="text-xs text-muted-foreground">
+        当前策略：{strategyLabel}。桶配置来自 Worker 环境变量 <code className="px-1 bg-muted">STORAGE_CONFIG</code>（JSON），
+        支持 R2 与第三方 S3 混用；写入时按用量比例/轮询选桶，每桶独立容量上限，超限自动切换。
+      </p>
+      {loading ? (
+        <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+      ) : (
+        <div className="space-y-2">
+          {config?.buckets.map((b) => {
+            const u = usage?.buckets.find((x) => x.id === b.id);
+            const used = u?.usedBytes ?? 0;
+            const max = u?.maxBytes ?? b.maxBytes ?? 0;
+            const pct = max > 0 ? Math.min(100, (used / max) * 100) : 0;
+            return (
+              <div key={b.id} className="border border-border rounded-lg p-3 space-y-1.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium font-mono">{b.id}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${b.type === 'r2' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-600'}`}>
+                      {b.type === 'r2' ? 'R2' : 'S3'}
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground font-mono">
+                    {formatBytes(used)} / {max > 0 ? formatBytes(max) : '∞'}
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-green-500'}`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground font-mono truncate">
+                  {b.type === 'r2'
+                    ? `binding: ${b.binding || 'UPLOADS'}`
+                    : `endpoint: ${b.endpoint || '-'} · bucket: ${b.bucket || '-'} · region: ${b.region || '-'}`}
+                </p>
+              </div>
+            );
+          })}
+          {(!config || config.buckets.length === 0) && (
+            <p className="text-sm text-muted-foreground text-center py-3">未配置存储桶</p>
+          )}
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={load} disabled={loading}>{loading ? '加载中…' : '刷新用量'}</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            配置示例（STORAGE_CONFIG）：
+            <code className="px-1 bg-muted break-all">{'{"strategy":"least-used","buckets":[{"type":"r2","binding":"UPLOADS","maxBytes":10737418240}]}'}</code>
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ForumAdminPage() {
   const { user } = useForumAuth();
 const currentUserId = user?.id;
@@ -573,6 +665,9 @@ const currentUserId = user?.id;
 
       {/* S3 GC */}
       <S3GcSection />
+
+      {/* 存储设置（多桶） */}
+      <StorageSection />
 
       {/* Email Test */}
       <EmailTestSection />

@@ -671,6 +671,43 @@ export function cleanupAdminStorageGc(orphans: string[]) {
   });
 }
 
+// ── 存储用量/配置（多桶）──
+
+export interface StorageBucketUsage {
+  id: string;
+  type: string;
+  usedBytes: number;
+  maxBytes: number;
+}
+
+export interface StorageUsageResult {
+  buckets: StorageBucketUsage[];
+  strategy: string;
+}
+
+export function getAdminStorageUsage() {
+  return forumRequest<StorageUsageResult>('/api/admin/storage/usage');
+}
+
+export interface StorageBucketConfigInfo {
+  id: string;
+  type: string;
+  binding?: string | null;
+  endpoint?: string | null;
+  bucket?: string | null;
+  region?: string | null;
+  maxBytes: number;
+}
+
+export interface StorageConfigResult {
+  strategy: string;
+  buckets: StorageBucketConfigInfo[];
+}
+
+export function getAdminStorageConfig() {
+  return forumRequest<StorageConfigResult>('/api/admin/storage/config');
+}
+
 export function getArticleNotificationsCount() {
   return forumRequest<{ count: number }>('/api/subscriptions/article-notifications');
 }
