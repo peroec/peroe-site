@@ -42,14 +42,14 @@ const CALLOUT_TITLES: Record<string, string> = {
 };
 
 const CALLOUT_ICONS: Record<string, string> = {
-  note: "ℹ️",
-  info: "ℹ️",
-  tip: "💡",
-  important: "❗",
-  warning: "⚠️",
-  caution: "⚠️",
-  danger: "🔥",
-  success: "✅",
+  note: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="m18.13 12 1.26-1.26c.44-.44 1-.68 1.61-.74V9l-6-6H5c-1.11 0-2 .89-2 2v14a2 2 0 0 0 2 2h6v-1.87l.13-.13H5V5h7v7zM14 4.5l5.5 5.5H14zm5.13 9.33 2.04 2.04L15.04 22H13v-2.04zm3.72.36-.98.98-2.04-2.04.98-.98c.2-.2.52-.2.72 0l1.32 1.32c.2.2.2.53 0 .72z"/></svg>',
+  info: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="M11 9h2V7h-2m1 13c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8m0-18A10 10 0 0 0 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m-1 15h2v-6h-2z"/></svg>',
+  tip: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="M20 11h3v2h-3zM1 11h3v2H1zM13 1v3h-2V1zM4.92 3.5l2.13 2.14-1.42 1.41L3.5 4.93zm12.03 2.13 2.12-2.13 1.43 1.43-2.13 2.12zM12 6a6 6 0 0 1 6 6c0 2.22-1.21 4.16-3 5.2V19a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-1.8c-1.79-1.04-3-2.98-3-5.2a6 6 0 0 1 6-6m2 15v1a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-1z"/></svg>',
+  important: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="M11 15h2v2h-2zm0-8h2v6h-2zm1-5C6.47 2 2 6.5 2 12a10 10 0 0 0 10 10 10 10 0 0 0 10-10A10 10 0 0 0 12 2m0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"/></svg>',
+  warning: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="M12 2 1 21h22M12 6l7.53 13H4.47M11 10v4h2v-4m-2 6v2h2v-2z"/></svg>',
+  caution: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="M7 2h10l-3.5 7H17l-7 13v-8H7zm2 2v8h3v2.66L14 11h-3.76l3.52-7z"/></svg>',
+  danger: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="M8.27 3 3 8.27v7.46L8.27 21h7.46L21 15.73V8.27L15.73 3M9.1 5h5.8L19 9.1v5.8L14.9 19H9.1L5 14.9V9.1m4.12-1.39L7.71 9.12 10.59 12l-2.88 2.88 1.41 1.41L12 13.41l2.88 2.88 1.41-1.41L13.41 12l2.88-2.88-1.41-1.41L12 10.59z"/></svg>',
+  success: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="callout-svg" aria-hidden="true"><path fill="currentColor" d="m9 16.17-3.88-3.88-1.41 1.42L9 19 21 7l-1.41-1.41z"/></svg>',
 };
 
 export function slugify(text: string): string {
@@ -111,9 +111,9 @@ const ext = marked.use({
         };
       },
       renderer(token: any) {
-        return `<div class="callout callout-${token.typeName}"><div class="callout-title"><span class="callout-icon">${
-          CALLOUT_ICONS[token.typeName] || "ℹ️"
-        }</span>${this.parser.parseInline([{ type: "text", text: token.title }] as any)}</div>${this.parser.parse(
+        return `<div class="callout callout-${token.typeName}"><div class="callout-title">${
+          CALLOUT_ICONS[token.typeName] || CALLOUT_ICONS.info
+        }${this.parser.parseInline([{ type: "text", text: token.title }] as any)}</div>${this.parser.parse(
           token.tokens as any
         )}</div>`;
       },

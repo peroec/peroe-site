@@ -201,9 +201,14 @@ body {
   margin-bottom: 6px;
 }
 .prose-dark .callout .callout-icon { font-size: 0.875rem; }
+.prose-dark .callout .callout-svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+}
 .prose-dark .callout p { margin: 0.4em 0; font-size: 0.875rem; }
-.prose-dark .callout-caution { border-left: 3px solid #f59e0b; }
-.prose-dark .callout-caution .callout-title { color: #fbbf24; }
+.prose-dark .callout-caution { border-left: 3px solid #ef4444; }
+.prose-dark .callout-caution .callout-title { color: #f87171; }
 .prose-dark .callout-warning { border-left: 3px solid #ef4444; }
 .prose-dark .callout-warning .callout-title { color: #f87171; }
 .prose-dark .callout-note,
