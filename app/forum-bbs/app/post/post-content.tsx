@@ -184,10 +184,12 @@ function CommentItem({
  * 所以 SSR 阶段直接用这份现成 HTML（后端已把裸 S3 key 重写成公开 URL）。
  */
 export interface PostInitialData {
-  post: ForumPostDetail;
+  post: ForumPostDetail | null;
   html: string;
   /** 服务端预取的评论树，每条带渲染并净化好的 html */
   comments: ForumCommentWithHtml[];
+  /** API 网络错误标记（非 404）：页面渲染可恢复的错误提示 */
+  apiError?: string;
 }
 
 const COMMENT_SORTS: { value: CommentSort; label: string }[] = [
@@ -402,9 +404,9 @@ export function PostContent({
     if (loadedSort.current === commentSort) return;
     loadedSort.current = commentSort;
     // 换排序时 loader 已经按新的 ?csort 取好了整份评论，匿名访客直接用它，
-    // 不必再客户端拉一遍
-    if (initialComments?.length && !localStorage.getItem('forum-auth-token')) {
-      setComments(initialComments);
+    // 不必再客户端拉一遍（含空列表——避免首屏对空评论重复请求）
+    if (!localStorage.getItem('forum-auth-token')) {
+      setComments(initialComments ?? []);
       setCommentsLoading(false);
       return;
     }

@@ -35,19 +35,54 @@ export async function clientLoader({ params, request }: LoaderFunctionArgs): Pro
       // 后端 404 转成路由的 404，交给 RootErrorBoundary 画页面
       const status = e && typeof e === "object" && "status" in e ? (e as { status: number }).status : 0;
       if (status === 404) throw new Response("Not Found", { status: 404 });
-      throw e;
+      // 网络错误不整页崩溃：标记 apiError，页面渲染可恢复的错误提示
+      return null;
     }),
     // 评论挂了不该让整篇帖子打不开
     getComments(id, commentSort).catch(() => []),
     loadRenderer(),
   ]);
 
+  if (!post) {
+    return {
+      post: null,
+      html: "",
+      comments: buildCommentTree(rawComments),
+      apiError: "网络错误，请检查连接后重试",
+    };
+  }
+
   return { post, html: render(post.content || ""), comments: buildCommentTree(rawComments) };
 }
 clientLoader.hydrate = true as const;
 
 export function Component() {
-  const { post, html, comments } = useLoaderData() as PostInitialData;
+  const { post, html, comments, apiError } = useLoaderData() as PostInitialData;
+
+  // API 网络错误：渲染可恢复提示，不整页崩溃
+  if (!post) {
+    return (
+      <div className="container mx-auto max-w-3xl px-4 py-16 text-center">
+        <h1 className="text-xl font-bold">{apiError || "页面出错，请稍后重试"}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          如果你切换到了本地后端，请先启动 127.0.0.1:8787，或切换回生产环境。
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="border border-border px-4 py-2 text-sm hover:text-white"
+          >
+            重新加载
+          </button>
+          <a href="/forum" className="border border-border px-4 py-2 text-sm hover:text-white">
+            返回论坛
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const toc = buildToc(html);
   const url = SITE_URL + canonicalPath(`/post/${post.id}`);
 

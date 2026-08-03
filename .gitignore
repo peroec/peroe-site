@@ -1,7 +1,7 @@
-# 依赖
+﻿# 渚濊禆
 node_modules/
 
-# 构建产物
+# 鏋勫缓浜х墿
 build/
 dist/
 .react-router/
@@ -9,15 +9,19 @@ dist/
 # Cloudflare
 .wrangler/
 
-# 本地环境变量（含密钥，不入库）
-.dev.vars
+# 鏈湴鐜鍙橀噺锛堝惈瀵嗛挜锛屼笉鍏ュ簱锛?.dev.vars
 .env.local
 .env.*.local
 *.local
 
-# 日志
+# 鏃ュ織
 *.log
 
 .DS_Store
 
-# Serena ����״̬�����أ�.serena/
+# Serena 工具状态（本地）.serena/
+# 环境变量：真实文件不入库，仅模板入库
+.env
+.env.*
+!.env.example
+!*.env.example

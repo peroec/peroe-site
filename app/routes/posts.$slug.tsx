@@ -2,6 +2,11 @@ import { Link } from "react-router";
 import { useEffect } from "react";
 import type { Route } from "./+types/posts.$slug";
 import { ArrowLeft, CalendarDays, Eye, FilePen } from "lucide-react";
+// 高亮在客户端完成：hljs 随文章页 chunk 加载（懒加载路由），SSR 不执行
+import hljs from "highlight.js/lib/common";
+import powershell from "highlight.js/lib/languages/powershell";
+import nginx from "highlight.js/lib/languages/nginx";
+import http from "highlight.js/lib/languages/http";
 import { renderMarkdown } from "~/lib/markdown";
 import { getPostBySlug } from "~/lib/posts.server";
 import {
@@ -26,14 +31,41 @@ export async function loader({ params }: Route.LoaderArgs) {
   return { post };
 }
 
-/** 文章正文：代码复制按钮 + 图片 lightbox（纯客户端增强） */
+/** 文章正文：客户端代码高亮 + 复制按钮 + 图片 lightbox（纯客户端增强，SSR 零高亮成本） */
 function Article({ html }: { html: string }) {
   useEffect(() => {
     const root = document.querySelector('[data-article]');
     if (!root) return;
+    let cancelled = false;
 
+    // 客户端代码高亮：SSR 只输出纯文本 + data-highlight 标记，这里动态高亮。
+    // 延迟到水合 commit 完全稳定后再执行（立即执行会被 React 的
+    // dangerouslySetInnerHTML 重置覆盖）；重新查询避免 StrictMode 双挂载下
+    // 闭包 NodeList 指向已 detached 的 DOM
+    const timer = window.setTimeout(() => {
+      const current = document.querySelectorAll<HTMLElement>("[data-article] code[data-highlight]");
+      if (current.length > 0) {
+        try {
+          hljs.registerLanguage("powershell", powershell);
+          hljs.registerLanguage("nginx", nginx);
+          hljs.registerLanguage("http", http);
+        } catch (e) {
+          console.error("[hljs] registerLanguage failed:", e);
+        }
+        current.forEach((el) => {
+          const lang = (el.className.match(/language-([\w-]+)/) || [])[1];
+          el.classList.add("hljs");
+          if (lang && hljs.getLanguage(lang)) {
+            hljs.highlightElement(el);
+          }
+        });
+      }
+    }, 500);
+
+    // 代码复制
     const copyButtons = root.querySelectorAll<HTMLButtonElement>(".code-copy");
-    const onCopy = (btn: HTMLButtonElement) => {
+    const onCopy = (e: MouseEvent) => {
+      const btn = e.currentTarget as HTMLButtonElement;
       const pre = btn.closest(".code-block")?.querySelector("pre code");
       if (!pre) return;
       const text = pre.textContent || "";
@@ -41,20 +73,25 @@ function Article({ html }: { html: string }) {
       btn.classList.add("copied");
       setTimeout(() => btn.classList.remove("copied"), 2000);
     };
-    copyButtons.forEach((btn) => btn.addEventListener("click", () => onCopy(btn)));
+    copyButtons.forEach((btn) => btn.addEventListener("click", onCopy));
 
+    // 图片 lightbox
     const imgs = root.querySelectorAll<HTMLImageElement>("img[data-lightbox]");
-    const onImgClick = (img: HTMLImageElement) => {
+    const onImgClick = (e: MouseEvent) => {
+      const img = e.currentTarget as HTMLImageElement;
       const overlay = document.createElement("div");
       overlay.className = "lightbox";
       overlay.innerHTML = `<img src="${img.src}" alt="${img.alt || ""}" />`;
       overlay.addEventListener("click", () => overlay.remove());
       document.body.appendChild(overlay);
     };
-    imgs.forEach((img) => img.addEventListener("click", () => onImgClick(img)));
+    imgs.forEach((img) => img.addEventListener("click", onImgClick));
 
     return () => {
-      copyButtons.forEach((btn) => btn.removeEventListener("click", () => onCopy(btn)));
+      cancelled = true;
+      clearTimeout(timer);
+      copyButtons.forEach((btn) => btn.removeEventListener("click", onCopy));
+      imgs.forEach((img) => img.removeEventListener("click", onImgClick));
     };
   }, [html]);
 

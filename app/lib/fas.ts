@@ -29,6 +29,10 @@ async function fetchJson<T>(path: string): Promise<T[]> {
   return Array.isArray(data) ? (data as T[]) : [];
 }
 
+// 1 小时内存缓存（跨组件复用、切页不重复请求；isolate 生命周期内有效）
+const cacheTtlMs = 60 * 60 * 1000;
+const cache = new Map<string, { ts: number; data: unknown[] }>();
+
 /** 客户端取数 + 1 小时缓存（与原站一致，避免频繁请求数据服务） */
 export function useFasData<T extends FasData>(path: string): {
   data: T[];
@@ -41,18 +45,30 @@ export function useFasData<T extends FasData>(path: string): {
 
   useEffect(() => {
     let cancelled = false;
+
+    const apply = (items: T[]) => {
+      if (cancelled) return;
+      // 构建脚本已按「VIP 优先 + 名称」排好，这里兜底排序
+      const sorted = [...items].sort((a, b) =>
+        a.vip === b.vip ? 0 : a.vip ? -1 : 1
+      );
+      setData(sorted);
+      setIsLoading(false);
+    };
+
+    // 命中缓存直接返回（同一引用，切页不闪烁不重复请求）
+    const hit = cache.get(path);
+    if (hit && Date.now() - hit.ts < cacheTtlMs) {
+      apply(hit.data as T[]);
+      return () => { cancelled = true; };
+    }
+
     setIsLoading(true);
     setIsError(false);
-
     fetchJson<T>(path)
       .then((items) => {
-        if (cancelled) return;
-        // 构建脚本已按「VIP 优先 + 名称」排好，这里兜底排序
-        const sorted = [...items].sort((a, b) =>
-          a.vip === b.vip ? 0 : a.vip ? -1 : 1
-        );
-        setData(sorted);
-        setIsLoading(false);
+        cache.set(path, { ts: Date.now(), data: items });
+        apply(items);
       })
       .catch(() => {
         if (cancelled) return;

@@ -1,19 +1,10 @@
 import { marked } from "marked";
-import hljs from "highlight.js/lib/common";
 import { langIconSvg } from "~/lib/code-icons";
-// common 集合未覆盖的博客常用语言：powershell/nginx/http（补注册后才有高亮）
-import powershell from "highlight.js/lib/languages/powershell";
-import nginx from "highlight.js/lib/languages/nginx";
-import http from "highlight.js/lib/languages/http";
-
-for (const [name, lang] of Object.entries({ powershell, nginx, http })) {
-  hljs.registerLanguage(name, lang);
-}
 
 /**
  * 博客 Markdown 渲染（对齐 2x.nz 线上格式）：
  * - callout 提示框：> [!CAUTION] 标题
- * - 代码块：.code-block（语言标签 + 复制按钮），pre 背景 #1e1e2e
+ * - 代码块：.code-block（语言标签 + 复制按钮），高亮由客户端 hljs 完成
  * - 标题自动锚点 id（中文保留）
  * - 表格、图片 lightbox、懒加载
  */
@@ -134,22 +125,14 @@ const ext = marked.use({
       if (lang === "mermaid") {
         return `<div class="mermaid">${escapeHtml(text)}</div>\n`;
       }
-      const language = typeof lang === "string" && hljs.getLanguage(lang) ? lang : "plaintext";
-      let highlighted: string;
-      if (language === "plaintext") {
-        highlighted = escapeHtml(text);
-      } else {
-        try {
-          // ignoreIllegals：代码含非法 token 时高亮不抛异常（对齐论坛版行为）
-          highlighted = hljs.highlight(text, { language, ignoreIllegals: true }).value;
-        } catch {
-          highlighted = escapeHtml(text);
-        }
-      }
+      // 高亮移到客户端：SSR 只输出转义后的源码 + data-highlight 标记，
+      // 由客户端 hljs.highlightElement 动态高亮（显著降低 Worker CPU/内存，
+      // 禁用 JS 时仍能完整阅读源码，AI/爬虫读到的是干净文本）
+      const language = typeof lang === "string" && lang.trim() ? lang.trim() : "plaintext";
       const langLabel = lang
         ? `<span class="code-lang">${langIconSvg(lang, "code-icon")}<span class="code-lang-name">${escapeHtml(lang)}</span></span>`
         : "";
-      return `<div class="code-block"><div class="code-head">${langLabel}<button type="button" class="code-copy" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copy" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copied" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span class="code-copy-label">copy</span></button></div><pre><code class="language-${language} hljs">${highlighted}</code></pre></div>`;
+      return `<div class="code-block"><div class="code-head">${langLabel}<button type="button" class="code-copy" title="复制代码"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copy" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="code-icon code-icon-copied" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span class="code-copy-label">copy</span></button></div><pre><code data-highlight class="language-${language}">${escapeHtml(text)}</code></pre></div>`;
     },
     image({ href, title, text }: any) {
       // 属性值必须转义：恶意图片语法（![x" onerror="...](y)）可做属性注入 XSS
