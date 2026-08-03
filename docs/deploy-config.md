@@ -18,10 +18,14 @@
   "forumApiBase": "https://forum.060730.xyz",        // 论坛后端 API（peroe-api Worker）
   "forumSiteUrl": "https://bbs.060730.xyz",          // 论坛独立部署地址（SEO canonical）
   "filesBaseUrl": "https://raw-files.2x.nz",         // 工具箱文件索引服务
+  "fasOrigin": "https://fas.060730.xyz",              // 友链/赞助数据服务
+  "fasRepo": "https://github.com/peroec/af_friends-data", // 友链数据仓库（申请友链指向）
 
   "analytics": {                                     // 统计脚本（umami），src 留空=关闭
     "src": "https://cloud.umami.is/script.js",
-    "websiteId": "842d980c-5e11-4834-a2a8-5daaa285ce66"
+    "websiteId": "842d980c-5e11-4834-a2a8-5daaa285ce66",
+    "shareToken": "",                                // umami 分享 URL token（文章浏览量回显用，留空=不显示浏览量）
+    "region": "us"                                   // umami 账号区域 us/eu（决定浏览量 API 域名）
   },
 
   "socialLinks": [                                   // 首页「关注 & 联系」
@@ -49,4 +53,5 @@
 | 门户 hub | `hub.060730.xyz` |
 | 论坛 API | `forum.060730.xyz` |
 | 论坛独立站 | `bbs.060730.xyz`（存留，不维护） |
+| 友链/赞助数据 | `fas.060730.xyz` |
 | 工具箱文件服务 | `raw-files.2x.nz`（原作者服务） |

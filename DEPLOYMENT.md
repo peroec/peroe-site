@@ -70,6 +70,19 @@ CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=115794fc4320d099fff55b1b91999
 - `mainSiteUrl`、`homeUrl`、`forumApiBase`、`forumSiteUrl`、`filesBaseUrl`、`fasOrigin`
 - `siteName`、`siteTitle`、`siteAvatar`、`analytics`、`socialLinks`
 
+### 文章浏览量（umami 回显，2026-08-03 新增）
+
+博客文章页浏览量在客户端水合后从 umami 分享 API 查询（SSR 保持 0，不拖慢渲染）：
+- 配置在 `site.config.json` → `analytics`：
+  - `shareToken`：umami 后台（cloud.umami.is）→ 站点 → 分享 URL 生成的 token，**留空则浏览量不显示**
+  - `region`：账号区域 `us` / `eu`（决定 API 域名 `cloud.umami.is/analytics/{region}`）
+- 文章路径匹配规则：umami 把 `/posts/xxx` 与 `/posts/xxx/` 视为不同路径，前端查询用 `/posts/<slug>/`（带尾斜杠）
+
+### 赞助名单
+
+`/sponsors` 页面从 `fas.060730.xyz/sponsors.json` 客户端拉取（与友链同机制，1 小时内存缓存），
+数据维护在 af_friends-data 仓库 `data/sponsors/`，**更新数据后重新部署 fas 即生效，无需改前端**。
+
 ## 5. 验证
 
 ```bash
