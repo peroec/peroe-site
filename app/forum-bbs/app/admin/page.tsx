@@ -433,6 +433,8 @@ function StorageSection() {
 export default function ForumAdminPage() {
   const { user, loading: authLoading } = useForumAuth();
   const currentUserId = user?.id;
+  /** 当前管理分栏：dashboard / users / settings / rate / channels / announcements / categories / storage / email */
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [subCount, setSubCount] = useState(0);
   const [settings, setSettings] = useState<Record<string, unknown>>({});
@@ -582,6 +584,19 @@ export default function ForumAdminPage() {
 
   const sortedCats = [...categories].sort((a, b) => a.id - b.id);
 
+  /** 左侧分栏定义 */
+  const TABS: { key: string; label: string; icon: string }[] = [
+    { key: 'dashboard', label: '仪表盘', icon: 'mdi:view-dashboard' },
+    { key: 'users', label: '用户管理', icon: 'mdi:account-group' },
+    { key: 'settings', label: '站点设置', icon: 'mdi:cog' },
+    { key: 'rate', label: '防滥用限流', icon: 'mdi:shield-account' },
+    { key: 'channels', label: '渠道推送策略', icon: 'mdi:bell-outline' },
+    { key: 'announcements', label: '公告管理', icon: 'mdi:bullhorn' },
+    { key: 'categories', label: '分类管理', icon: 'mdi:shape-outline' },
+    { key: 'storage', label: '存储管理', icon: 'mdi:database' },
+    { key: 'email', label: '邮件测试', icon: 'mdi:email-outline' },
+  ];
+
   return (
     <main className="container mx-auto max-w-6xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
@@ -594,6 +609,30 @@ export default function ForumAdminPage() {
         <Button variant="outline" size="sm" onClick={() => { loadStats(); loadSettings(); loadCategories(); }}>刷新数据</Button>
       </div>
 
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* 左侧分栏导航 */}
+        <nav className="shrink-0 md:w-44 space-y-0.5">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setActiveTab(t.key)}
+              className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors ${
+                activeTab === t.key
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              }`}
+            >
+              <Icon icon={t.icon} className="size-4 shrink-0" />
+              {t.label}
+            </button>
+          ))}
+        </nav>
+
+        {/* 右侧内容区 */}
+        <div className="flex-1 min-w-0">
+          {activeTab === 'dashboard' && (
+            <>
       {/* Stats */}
       {/* 连体网格：手机端也是 2 列，竖线在这里是有意义的分栏 */}
       <div className="grid grid-cols-2 md:grid-cols-4 border-t border-l border-border mb-6">
@@ -612,7 +651,11 @@ export default function ForumAdminPage() {
           </div>
         ))}
       </div>
+      </>
+          )}
 
+      {activeTab === 'settings' && (
+        <>
       {/* Settings */}
       <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
         <h2 className="font-semibold">站点设置</h2>
@@ -638,7 +681,11 @@ export default function ForumAdminPage() {
           </>
         )}
       </div>
+        </>
+      )}
 
+      {activeTab === 'rate' && (
+        <>
       {/* 防滥用限流 */}
       <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
         <div>
@@ -670,13 +717,25 @@ export default function ForumAdminPage() {
           </>
         )}
       </div>
+        </>
+      )}
 
+      {activeTab === 'channels' && (
+        <>
       {/* 渠道推送策略 */}
       <ChannelPolicySection />
+        </>
+      )}
 
+      {activeTab === 'announcements' && (
+        <>
       {/* 公告管理 */}
       <AnnouncementsSection />
+        </>
+      )}
 
+      {activeTab === 'storage' && (
+        <>
       {/* S3 GC */}
       <S3GcSection />
 
@@ -685,7 +744,11 @@ export default function ForumAdminPage() {
 
       {/* Email Test */}
       <EmailTestSection />
+        </>
+      )}
 
+      {activeTab === 'categories' && (
+        <>
       {/* Categories */}
       <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
         <h2 className="font-semibold">分类管理</h2>
@@ -723,7 +786,11 @@ export default function ForumAdminPage() {
           ))}
         </div>
       </div>
+        </>
+      )}
 
+      {activeTab === 'users' && (
+        <>
       {/* Users */}
       <div className="border-y border-border py-5 sm:border sm:p-5 space-y-4">
         <h2 className="font-semibold">用户管理</h2>
@@ -854,6 +921,10 @@ export default function ForumAdminPage() {
               </div>
             );})
           )}
+        </div>
+      </div>
+        </>
+      )}
         </div>
       </div>
     </main>
