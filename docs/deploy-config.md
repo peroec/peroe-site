@@ -45,6 +45,33 @@
 | `.env` 的 `VITE_FORUM_API_BASE` | 论坛前端 API（构建期注入，与 `forumApiBase` 一致） |
 | Cloudflare 后台 → peroe-api Worker 的 `OAUTH_REDIRECT_WHITELIST` | GitHub 登录回跳白名单（需含主站与论坛域名） |
 
+## 完整配置清单（前端侧）
+
+### .env（构建期，随仓库提交）
+
+| 变量 | 值 | 说明 |
+|---|---|---|
+| `VITE_BASE_PATH` | `/forum` | 论坛模块挂载路径（勿改） |
+| `VITE_FORUM_API_BASE` | `https://forum.060730.xyz` | 论坛 + 交互小说 API 基地址（浏览器端） |
+
+### wrangler.jsonc（运行时）
+
+| 配置 | 值 | 说明 |
+|---|---|---|
+| `vars.FORUM_API_BASE` | `https://forum.060730.xyz` | SSR 端回源论坛地址 |
+| `assets.directory` | `./build/client` | 静态资源目录（构建产物） |
+| `account_id` | `115794fc4320d099fff55b1b91999f2c` | Cloudflare 账户 ID |
+
+### site.config.json（站点统一配置）
+
+| 键 | 值 | 说明 |
+|---|---|---|
+| `forumApiBase` | `https://forum.060730.xyz` | **交互小说也走这个地址**（前端 API 复用） |
+| `analytics.shareToken` | 留空 | umami 浏览量回显（生产前填） |
+| `authAllowedOrigins` | `https://bbs.060730.xyz` | 跨站登录授权白名单 |
+
+> **交互小说（webnovel）前端无需额外配置**：登录态（forum-auth-token）和 API 地址（forumApiBase）全部复用论坛的。AI 生成/充值配置都在后端（forum-api 的 `.dev.vars` / Cloudflare secrets），详见 forum-api/DEPLOYMENT.md。
+
 ## 域名规划表（当前值）
 
 | 用途 | 域名 |
@@ -55,3 +82,4 @@
 | 论坛独立站 | `bbs.060730.xyz`（存留，不维护） |
 | 友链/赞助数据 | `fas.060730.xyz` |
 | 工具箱文件服务 | `raw-files.2x.nz`（原作者服务） |
+| 交互小说 | 无独立域名（走主站 `/webnovel` 路径 + 论坛 API） |
