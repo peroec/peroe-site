@@ -8,12 +8,14 @@ import {
   Heart,
   Briefcase,
   ChevronDown,
+  BookOpen,
 } from "lucide-react";
 import { SITE_AVATAR, SITE_NAME, TOOL_ITEMS } from "~/lib/site";
 
 const NAV_ITEMS = [
   { to: "/posts", label: "博客", icon: Newspaper },
   { to: "/forum", label: "论坛", icon: MessagesSquare },
+  { to: "/webnovel", label: "小说", icon: BookOpen },
   { to: "/anime", label: "追番", icon: Tv },
   { to: "/friends", label: "友链", icon: Link2 },
   { to: "/sponsors", label: "赞助", icon: Heart },
