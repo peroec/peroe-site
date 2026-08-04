@@ -83,6 +83,15 @@ CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=115794fc4320d099fff55b1b91999
 `/sponsors` 页面从 `fas.060730.xyz/sponsors.json` 客户端拉取（与友链同机制，1 小时内存缓存），
 数据维护在 af_friends-data 仓库 `data/sponsors/`，**更新数据后重新部署 fas 即生效，无需改前端**。
 
+### 交互小说（webnovel，2026-08-04 新增）
+
+- 路由：`/webnovel`（列表）、`/webnovel/:slug`（详情）、`/webnovel/play/:slug`（游玩）、`/webnovel/editor`（创作）、`/webnovel/me`（我的+钱包）
+- 后端：集成在 forum-api（`/api/webnovel/api/*`），**登录态复用论坛**（forum-auth-token）
+- AI 生成：后端配置 AI_OPENAI_* 或 AI_CF_*（见 forum-api DEPLOYMENT.md）
+- 充值：爱发电 webhook 全自动（forum-api 侧配置）
+- 前端代码：`app/components/webnovel/`（游玩引擎/列表/详情/编辑器/我的）+ `app/lib/webnovel/`（API/引擎）
+- 本地测试：`pnpm dev` 后浏览器切 dev 环境（论坛标题 → 高级设置 → 开发），数据走本地 8787
+
 ## 5. 验证
 
 ```bash
@@ -91,6 +100,7 @@ curl https://<你的域名>/posts       # 博客列表 200
 curl https://<你的域名>/forum       # 论坛 200（客户端渲染）
 curl https://<你的域名>/friends     # 友链 200（客户端 fetch 数据）
 curl https://<你的域名>/posts/rss.xml  # RSS 200
+curl https://<你的域名>/webnovel    # 交互小说列表 200
 ```
 
 ## 6. 关联服务
