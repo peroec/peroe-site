@@ -451,8 +451,8 @@ export function NovelEditor() {
         {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
 
         {jobs.length > 0 && (
-          <div className="mt-3 border border-border">
-            <div className="border-b border-border px-2 py-1 text-[11px] text-muted-foreground">创作任务（后台运行，可关闭页面）</div>
+          <details className="mt-3 border border-border">
+            <summary className="cursor-pointer select-none border-b border-border px-2 py-1 text-[11px] text-muted-foreground">创作任务（后台运行，可关闭页面）</summary>
             <ul>
               {jobs.map((job) => (
                 <li key={job.job_id} className="flex items-start justify-between gap-2 border-b border-border px-2 py-1.5 text-xs last:border-0">
@@ -464,9 +464,14 @@ export function NovelEditor() {
                     {job.status === 'done' && job.title && <b className="ml-1.5">《{job.title}》</b>}
                     {job.status === 'done' && <span className="ml-1.5 font-mono text-muted-foreground">{job.tokens} tokens · 扣 {job.cost}</span>}
                     <p className="truncate text-muted-foreground">{job.prompt}</p>
-                    {/* 实时模型输出（流式生成时落库的 progress） */}
                     {job.status === 'pending' && job.progress && (
-                      <p className="mt-1 line-clamp-2 font-mono text-[11px] text-muted-foreground/80 whitespace-pre-wrap break-all">{job.progress}</p>
+                      <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground/80">模型输出（实时）：{job.progress}</p>
+                    )}
+                    {job.status === 'done' && job.result && (
+                      <details className="mt-1 border-t border-border pt-1">
+                        <summary className="cursor-pointer select-none text-[11px] text-muted-foreground">查看模型最终回传</summary>
+                        <pre className="mt-1 max-h-72 overflow-auto whitespace-pre-wrap break-all border border-border bg-muted p-2 font-mono text-[11px]">{JSON.stringify(job.result, null, 2)}</pre>
+                      </details>
                     )}
                   </div>
                   {job.status === 'done' && job.slug && (
@@ -475,7 +480,7 @@ export function NovelEditor() {
                 </li>
               ))}
             </ul>
-          </div>
+          </details>
         )}
       </section>
 
