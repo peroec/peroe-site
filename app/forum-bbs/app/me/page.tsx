@@ -76,8 +76,13 @@ function MeContent() {
   const [qqSending, setQqSending] = useState(false);
   const [qqSent, setQqSent] = useState(false);
   const [qqCountdown, setQqCountdown] = useState(0);
-  // #178：QQ 验证码倒计时 interval 引用，卸载时清理
+  // #178：QQ 验证码倒计时 interval 引用，卸载时清理。
+  // 必须放在组件顶部（所有条件 return 之前）——此前放在 return 前导致
+  // 登录状态切换时 hooks 数量变化，React 报 "Rendered more hooks"。
   const qqTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => () => {
+    if (qqTimerRef.current) clearInterval(qqTimerRef.current);
+  }, []);
   const [qqMsg, setQqMsg] = useState('');
   const [unbinding, setUnbinding] = useState(false);
   // ── 通知偏好 ──
@@ -400,11 +405,6 @@ function MeContent() {
     { value: 'other', label: '其他' },
     { value: 'prefer_not_to_say', label: '不方便透露' },
   ];
-
-  // #178：卸载时清理 QQ 验证码倒计时
-  useEffect(() => () => {
-    if (qqTimerRef.current) clearInterval(qqTimerRef.current);
-  }, []);
 
   return (
     <main className="container mx-auto max-w-4xl px-4 py-8">
