@@ -209,6 +209,7 @@ export function NovelEditor() {
     try {
       const { job_id } = await aiGenerate(requirement.trim());
       setMessage('已开始创作，可以关闭页面 —— 完成后作品会自动出现在「我的作品」里。');
+      void loadJobs();
       const job = await waitAiJob(job_id, (seconds) => setMessage(`正在生成… ${seconds}s（后台运行，可关闭页面）`));
       if (job.status === 'done' && job.result) {
         const result = job.result as { title?: string; description?: string; tags?: string[]; content?: unknown };
@@ -308,6 +309,7 @@ export function NovelEditor() {
     try {
       const { job_id } = await aiRefine(editing.novel.slug, refineInstruction.trim());
       setMessage('已开始修改，可以关闭页面 —— 改好后直接写回这部作品。');
+      void loadJobs();
       const job = await waitAiJob(job_id, (seconds) => setMessage(`正在修改… ${seconds}s`));
       if (job.status === 'done') {
         const novel = await getNovel(editing.novel.slug);
@@ -451,7 +453,7 @@ export function NovelEditor() {
         {message && <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>}
 
         {jobs.length > 0 && (
-          <details className="mt-3 border border-border">
+          <details className="mt-3 border border-border" open={jobs.some((job) => job.status === 'pending')}>
             <summary className="cursor-pointer select-none border-b border-border px-2 py-1 text-[11px] text-muted-foreground">创作任务（后台运行，可关闭页面）</summary>
             <ul>
               {jobs.map((job) => (
@@ -464,8 +466,11 @@ export function NovelEditor() {
                     {job.status === 'done' && job.title && <b className="ml-1.5">《{job.title}》</b>}
                     {job.status === 'done' && <span className="ml-1.5 font-mono text-muted-foreground">{job.tokens} tokens · 扣 {job.cost}</span>}
                     <p className="truncate text-muted-foreground">{job.prompt}</p>
-                    {job.status === 'pending' && job.progress && (
-                      <p className="mt-1 line-clamp-3 whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground/80">模型输出（实时）：{job.progress}</p>
+                    {job.status === 'pending' && (
+                      <p className="mt-1 font-mono text-[11px] text-muted-foreground/80">
+                        <span className="text-foreground">模型输出（实时）：</span>
+                        {job.progress ? <span className="whitespace-pre-wrap break-all">{job.progress}</span> : <span className="text-muted-foreground/50">等待模型输出…</span>}
+                      </p>
                     )}
                     {job.status === 'done' && job.result && (
                       <details className="mt-1 border-t border-border pt-1">
