@@ -304,7 +304,7 @@ export function NovelFormat() {
 
       <section className="border-t border-border py-6"><SectionHeader title="最小可用示例" description="3 条路径 · 2 个结局 · 1 个道具门槛。体检零问题，可直接导入试跑" copy={<CopyButton text={MINIMAL_EXAMPLE} label="复制示例" copyKey="example" copied={copied} onCopy={copy} />} /><CodeBlock>{MINIMAL_EXAMPLE}</CodeBlock></section>
 
-      <section className="border-t border-border py-6"><SectionHeader title="导入 / 导出" description="都在创作页" /><div className="space-y-3 text-sm leading-relaxed"><p><strong>导入：</strong>创作页顶部「导入 JSON」，粘贴文本或上传 .json 文件。允许带 markdown 代码块和模型的客套话，会自动抠出 JSON；pages 放在顶层、外面裹了一层 novel 之类的常见变形也能识别。导入后是草稿，不会自动公开。</p><p><strong>导出：</strong>我的作品每行的「导出」按钮，下载的就是上面那个顶层结构。拿它配合改写提示词，可以让 AI 在你已有的成果上继续改。</p><Link to="/webnovel/editor" className="inline-block underline">去创作页</Link></div></section>
+      <section className="border-t border-border py-6"><SectionHeader title="导入 / 导出" description="都在创作页" /><div className="space-y-3 text-sm leading-relaxed"><p><strong>导入：</strong>创作页顶部「导入 JSON」，粘贴文本或上传 .json 文件。允许带 markdown 代码块和模型的客套话，会自动抠出 JSON；pages 放在顶层、外面裹了一层 novel 之类的常见变形也能识别。导入后是草稿，不会自动公开。</p><p><strong>导出：</strong>我的作品每行的「导出」按钮，下载的就是上面那个顶层结构。拿它配合改写提示词，可以让 AI 在你已有的成果上继续改。</p><Link to="/webnovel/editor" className="inline-block"><button type="button" className="inline-flex shrink-0 items-center justify-center gap-1 border border-border bg-transparent px-2.5 py-1.5 font-mono text-xs font-medium text-foreground hover:border-foreground hover:bg-foreground hover:text-background">去创作页</button></Link></div></section>
     </div>
   );
 }
