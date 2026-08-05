@@ -330,7 +330,7 @@ export function NovelEditor() {
   const recharge = async () => {
     setRecharging(true); setError(''); setMessage('');
     try {
-      const order = await createWalletOrder(600);
+      const order = await createWalletOrder(wallet?.plan?.[0]?.points ?? 6000);
       if (order.pay_url) {
         window.open(order.pay_url, '_blank');
         setMessage(`订单已创建（${order.points} 点 / ${order.amount_cny} 元），支付完成后自动到账，点「已支付，刷新余额」确认。`);
@@ -359,7 +359,7 @@ export function NovelEditor() {
           <h2 className="inline-flex items-center gap-1.5 text-base font-semibold"><Sparkles className="size-4" /> AI 创作</h2>
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="font-mono">创作点 {wallet?.balance ?? '…'}{wallet ? `（按 token 计费：${wallet.token_per_point} tokens = 1 点）` : ''}</span>
-            <button type="button" className="inline-flex h-6 items-center gap-1 border border-border px-2 hover:border-foreground disabled:opacity-50" onClick={recharge} disabled={recharging}>{recharging ? '下单中…' : '充值'}</button>
+            <button type="button" className="inline-flex h-6 items-center gap-1 border border-border px-2 hover:border-foreground disabled:opacity-50" onClick={recharge} disabled={recharging}>{recharging ? '下单中…' : `充值（${wallet?.plan?.[0]?.points ?? 6000} 点/份）`}</button>
             <button type="button" className="border border-border px-2 py-0.5 hover:border-foreground" onClick={sync}>已支付，刷新余额</button>
             <button type="button" className={`border px-2 py-0.5 hover:border-foreground ${(mails?.unclaimed_count ?? 0) > 0 ? 'border-foreground' : 'border-border'}`} onClick={() => setMailsOpen((v) => !v)}>站内信{(mails?.unclaimed_count ?? 0) > 0 ? `（${mails?.unclaimed_count ?? 0}）` : ''}</button>
           </div>
@@ -398,6 +398,10 @@ export function NovelEditor() {
             <div className="mt-2 flex flex-wrap gap-1.5">
               {AI_PROMPT_EXAMPLES.map((prompt) => <button key={prompt} type="button" className="border border-border px-2 py-1 text-[11px] text-muted-foreground hover:border-foreground disabled:opacity-50" onClick={() => setRequirement(prompt)} disabled={busy}>{prompt.slice(0, 18)}…</button>)}
             </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              <Link to="/webnovel/format" className="text-primary underline">去格式与提示词页</Link>
+              复制提示词，喂给任意大模型，再把它输出的 JSON 贴到那里 —— 不消耗创作点。
+            </p>
           </>
         )}
         {/* 消息（充值/领取/生成等反馈）全局显示，AI 未配置时也能看到 */}

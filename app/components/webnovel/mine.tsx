@@ -2,17 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { Play, Heart } from 'lucide-react';
 import { getMyNovels, getWallet, createWalletOrder, getMyOrders, getWalletLedger, deleteNovel, publishNovel, updateNovel } from '@/lib/webnovel/api';
-import type { Novel, WalletLedgerEntry } from '@/lib/webnovel/api';
-
-const RECHARGE_PLANS = [
-  { points: 100, amount: 6, label: '6 元 / 100 点' },
-  { points: 220, amount: 12, label: '12 元 / 220 点' },
-  { points: 600, amount: 30, label: '30 元 / 600 点' },
-];
+import type { Novel, WalletInfo, WalletLedgerEntry } from '@/lib/webnovel/api';
 
 export function NovelMine() {
   const [novels, setNovels] = useState<Novel[]>([]);
-  const [points, setPoints] = useState(0);
+  const [wallet, setWallet] = useState<WalletInfo | null>(null);
   const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
   const [ledger, setLedger] = useState<WalletLedgerEntry[]>([]);
   const [msg, setMsg] = useState('');
@@ -21,7 +15,7 @@ export function NovelMine() {
 
   const load = useCallback(async () => {
     try { setNovels(await getMyNovels()); } catch { setNotLoggedIn(true); return; }
-    try { setPoints((await getWallet()).balance); } catch {}
+    try { setWallet(await getWallet()); } catch {}
     try { setOrders(await getMyOrders()); } catch {}
     try { setLedger(await getWalletLedger()); } catch {}
   }, []);
@@ -64,14 +58,14 @@ export function NovelMine() {
       <div className="border border-border rounded-lg p-4 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold">创作点钱包</h2>
-          <span className="text-lg font-bold font-mono">{points} 点</span>
+          <span className="text-lg font-bold font-mono">{wallet?.balance ?? '…'} 点</span>
         </div>
         <div>
           <p className="text-xs text-muted-foreground mb-2">充值（爱发电）</p>
           <div className="flex flex-wrap gap-2">
-            {RECHARGE_PLANS.map((p) => (
+            {(wallet?.plan?.length ? wallet.plan : [{ points: 6000, amount: 6 }]).map((p) => (
               <button key={p.points} onClick={() => recharge(p)} className="border border-border rounded-lg px-4 py-2 text-sm hover:border-foreground transition-colors">
-                {p.label}
+                {p.amount} 元 / {p.points} 点
               </button>
             ))}
           </div>

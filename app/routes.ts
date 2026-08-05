@@ -32,6 +32,7 @@ export default [
   route("webnovel", "routes/webnovel.tsx"),
   route("webnovel/play/:slug", "routes/webnovel.play.$slug.tsx"),
   route("webnovel/editor", "routes/webnovel.editor.tsx"),
+  route("webnovel/format", "routes/webnovel.format.tsx"),
   route("webnovel/me", "routes/webnovel.me.tsx"),
   route("webnovel/:slug", "routes/webnovel.$slug.tsx"),
   route("agree", "routes/agree.tsx"),

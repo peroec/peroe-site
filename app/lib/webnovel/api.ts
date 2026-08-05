@@ -76,6 +76,11 @@ async function request<T>(path: string, options: RequestInit & { auth?: boolean 
   return (await res.json()) as T;
 }
 
+/** 创作提示词模板（format 页展示，喂给任意大模型） */
+export function getAiPrompt() {
+  return request<{ prompt: string }>('/webnovel/api/ai/prompt');
+}
+
 // ── 小说 CRUD ──
 
 export function getNovels(params: { q?: string; page?: number; perPage?: number } = {}) {
@@ -179,6 +184,8 @@ export interface WalletInfo {
   token_per_point: number;
   min_balance: number;
   per_sku: number;
+  /** 充值档位（后端驱动，避免前端硬编码脱节）：{ points, amount } */
+  plan: Array<{ points: number; amount: number }>;
   recharge_url: string | null;
 }
 
