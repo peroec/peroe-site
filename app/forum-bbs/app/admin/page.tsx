@@ -43,10 +43,15 @@ import {
   getAdminWebnovelMails,
   createAdminWebnovelMail,
   deleteAdminWebnovelMail,
+  getAdminUserPermissions,
+  saveAdminUserPermissions,
+  getAdminUserActivity,
+  getAdminUserPosts,
   type StorageBucketRecord,
   type StorageBucketsResult,
   type WebnovelOrder,
   type WebnovelMailRecord,
+  type UserPermissionMap,
   type ChannelPolicy,
   type StorageUsageResult,
   type StorageConfigResult,
@@ -860,6 +865,15 @@ export default function ForumAdminPage() {
   } | null>(null);
   const [savingUser, setSavingUser] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  /** 用户管理展开面板：give=赠送创作点 / posts=帖子 / activity=动态 / perms=权限 */
+  const [userPanel, setUserPanel] = useState<{ uid: string; tab: 'give' | 'posts' | 'activity' | 'perms' } | null>(null);
+  const [givePoints, setGivePoints] = useState('');
+  const [giving, setGiving] = useState(false);
+  const [userPosts, setUserPosts] = useState<Record<string, unknown>[] | null>(null);
+  const [userActivity, setUserActivity] = useState<{ type: string; payload: Record<string, unknown>; created_at: string }[] | null>(null);
+  const [userPerms, setUserPerms] = useState<UserPermissionMap | null>(null);
+  const [permsLoading, setPermsLoading] = useState(false);
+  const [permsSaving, setPermsSaving] = useState(false);
 
   const loadStats = useCallback(async () => {
     try { setStats(await getAdminStats()); } catch {}
@@ -1267,6 +1281,10 @@ export default function ForumAdminPage() {
                       if (!role) return;
                       try { await setAdminUserRole(uid, role); loadUsers(); toast.success('角色已更新'); } catch (e) { toast.error(e instanceof Error ? e.message : '操作失败'); }
                     }}>角色</Button>
+                    <Button size="sm" variant="ghost" disabled={String(u.id) === currentUserId} onClick={() => setUserPanel(userPanel?.uid === uid && userPanel.tab === 'give' ? null : { uid, tab: 'give' })}>赠送</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setUserPanel(userPanel?.uid === uid && userPanel.tab === 'posts' ? null : { uid, tab: 'posts' })}>帖子</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setUserPanel(userPanel?.uid === uid && userPanel.tab === 'activity' ? null : { uid, tab: 'activity' })}>动态</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setUserPanel(userPanel?.uid === uid && userPanel.tab === 'perms' ? null : { uid, tab: 'perms' })}>权限</Button>
                     <Button size="sm" variant="ghost" className={u.banned ? '' : 'text-red-500'} onClick={async () => {
                       if (u.banned) {
                         try { await setAdminUserBan(uid, false); loadUsers(); toast.success('已解封'); } catch { toast.error('操作失败'); }
@@ -1343,6 +1361,119 @@ export default function ForumAdminPage() {
                     <p className="text-xs text-muted-foreground">
                       只提交实际改动的字段 —— 站点设置里若开了「改名/改头像通知」，未改动的字段不会白发一封邮件。
                     </p>
+                  </div>
+                )}
+
+                {/* 用户管理展开面板：赠送 / 帖子 / 动态 / 权限 */}
+                {userPanel?.uid === uid && (
+                  <div className="mt-3 border border-border bg-muted/30 p-3 space-y-3">
+                    {userPanel.tab === 'give' && (
+                      <>
+                        <p className="text-xs text-muted-foreground">给 <b>{String(u.username ?? '')}</b>（#{uid}）赠送创作点（AI 生成消耗，记录写入钱包账本）</p>
+                        <div className="flex items-center gap-2">
+                          <input type="number" min={1} value={givePoints} onChange={(e) => setGivePoints(e.target.value)} placeholder="创作点" className="h-9 w-32 px-3 border bg-background text-sm" />
+                          <Button size="sm" disabled={giving || !givePoints || Number(givePoints) <= 0} onClick={async () => {
+                            setGiving(true);
+                            try {
+                              const r = await giveWebnovelPoints(Number(uid), Number(givePoints));
+                              toast.success(`已赠送 ${givePoints} 点，余额 ${r.balance}`);
+                              setGivePoints('');
+                            } catch (e) { toast.error(e instanceof Error ? e.message : '赠送失败'); }
+                            setGiving(false);
+                          }}>{giving ? '赠送中…' : '赠送'}</Button>
+                        </div>
+                      </>
+                    )}
+                    {userPanel.tab === 'posts' && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground">帖子（最新 50 条）</p>
+                          <Button size="sm" variant="ghost" onClick={async () => { try { setUserPosts(await getAdminUserPosts(uid)); } catch { toast.error('加载失败'); } }}>加载</Button>
+                        </div>
+                        {userPosts === null ? (
+                          <p className="text-xs text-muted-foreground">点击「加载」查看该用户的帖子。</p>
+                        ) : userPosts.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">暂无帖子。</p>
+                        ) : (
+                          <ul className="max-h-64 overflow-y-auto space-y-1">
+                            {userPosts.map((p) => (
+                              <li key={String(p.id)} className="flex items-center justify-between gap-2 border-b border-border pb-1 text-sm last:border-0">
+                                <Link to={`/forum/post/${p.id}`} className="min-w-0 truncate hover:underline">{String(p.title ?? '')}</Link>
+                                <span className="shrink-0 text-xs text-muted-foreground">{String(p.created_at ?? '').slice(0, 10)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                    {userPanel.tab === 'activity' && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground">站内动态（最近 30 条通知）</p>
+                          <Button size="sm" variant="ghost" onClick={async () => { try { setUserActivity(await getAdminUserActivity(uid)); } catch { toast.error('加载失败'); } }}>加载</Button>
+                        </div>
+                        {userActivity === null ? (
+                          <p className="text-xs text-muted-foreground">点击「加载」查看该用户的动态。</p>
+                        ) : userActivity.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">暂无动态。</p>
+                        ) : (
+                          <ul className="max-h-64 overflow-y-auto space-y-1">
+                            {userActivity.map((a, i) => (
+                              <li key={i} className="flex items-start justify-between gap-2 border-b border-border pb-1 text-xs last:border-0">
+                                <span className="min-w-0">
+                                  <span className="bg-secondary px-1.5 py-0.5 mr-1.5">{a.type}</span>
+                                  {typeof a.payload?.msg === 'string' && <span className="text-muted-foreground">{a.payload.msg}</span>}
+                                  {typeof a.payload?.title === 'string' && <span className="text-muted-foreground">{a.payload.title}</span>}
+                                </span>
+                                <span className="shrink-0 text-muted-foreground">{String(a.created_at ?? '').slice(0, 16)}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </>
+                    )}
+                    {userPanel.tab === 'perms' && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs text-muted-foreground">精细权限（默认全部可用，勾掉即禁用该能力；管理员不受限）</p>
+                          <Button size="sm" variant="ghost" onClick={async () => {
+                            setPermsLoading(true);
+                            try { setUserPerms((await getAdminUserPermissions(uid)).permissions); } catch { toast.error('加载失败'); }
+                            setPermsLoading(false);
+                          }}>加载</Button>
+                        </div>
+                        {userPerms === null ? (
+                          <p className="text-xs text-muted-foreground">点击「加载」查看权限。</p>
+                        ) : (
+                          <>
+                            <div className="space-y-1.5">
+                              {Object.entries(userPerms).map(([key, meta]) => (
+                                <label key={key} className="flex items-center justify-between gap-2 cursor-pointer">
+                                  <span className="min-w-0">
+                                    <span className="block text-sm">{meta.label}</span>
+                                    <span className="block text-xs text-muted-foreground truncate">{meta.desc}</span>
+                                  </span>
+                                  <Checkbox
+                                    checked={meta.enabled}
+                                    onCheckedChange={(v) => setUserPerms((prev) => prev ? { ...prev, [key]: { ...prev[key], enabled: !!v } } : prev)}
+                                  />
+                                </label>
+                              ))}
+                            </div>
+                            <Button size="sm" disabled={permsSaving} onClick={async () => {
+                              setPermsSaving(true);
+                              try {
+                                const changes: Record<string, boolean> = {};
+                                for (const [k, v] of Object.entries(userPerms)) changes[k] = v.enabled;
+                                await saveAdminUserPermissions(uid, changes);
+                                toast.success('权限已保存，立即生效');
+                              } catch (e) { toast.error(e instanceof Error ? e.message : '保存失败'); }
+                              setPermsSaving(false);
+                            }}>{permsSaving ? '保存中…' : '保存权限'}</Button>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
               </div>

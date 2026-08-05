@@ -442,7 +442,7 @@ function MeContent() {
             <label className="text-sm text-muted-foreground block mb-1">
               用户名
               {/* 用户 ID：灰色小字放在用户名旁边，便于联系开发者 / 接收赠送时提供 */}
-              <span className="ml-1.5 select-all font-mono text-xs text-muted-foreground/70">({localUser?.id ?? user?.id ?? '—'})</span>
+              <span className="ml-1.5 select-all font-mono text-xs text-muted-foreground/70">(#{localUser?.id ?? user?.id ?? '—'})</span>
             </label>
             <Input type="text" value={username} onChange={(e) => setUsername(e.target.value)} maxLength={20} />
           </div>

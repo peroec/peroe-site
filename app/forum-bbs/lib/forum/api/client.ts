@@ -810,6 +810,38 @@ export function deleteAdminWebnovelMail(id: number) {
   });
 }
 
+// ── 用户管理：精细化权限 / 动态 ──
+
+export interface UserPermissionMap {
+  [key: string]: { label: string; desc: string; enabled: boolean };
+}
+
+export function getAdminUserPermissions(userId: string) {
+  return forumRequest<{ permissions: UserPermissionMap }>(`/api/admin/users/${encodeURIComponent(userId)}/permissions`);
+}
+
+export function saveAdminUserPermissions(userId: string, permissions: Record<string, boolean>) {
+  return forumRequest<{ success: boolean }>(`/api/admin/users/${encodeURIComponent(userId)}/permissions`, {
+    method: 'POST',
+    body: JSON.stringify({ permissions }),
+  });
+}
+
+export interface UserActivityItem {
+  type: string;
+  payload: Record<string, unknown>;
+  created_at: string;
+}
+
+export function getAdminUserActivity(userId: string) {
+  return forumRequest<UserActivityItem[]>(`/api/admin/users/${encodeURIComponent(userId)}/activity`);
+}
+
+/** 管理员查看指定用户的帖子（公开接口，管理员 token 同样可调） */
+export function getAdminUserPosts(userId: string) {
+  return forumRequest<Record<string, unknown>[]>(`/api/users/${encodeURIComponent(userId)}/posts?limit=50`);
+}
+
 export function getArticleNotificationsCount() {
   return forumRequest<{ count: number }>('/api/subscriptions/article-notifications');
 }
