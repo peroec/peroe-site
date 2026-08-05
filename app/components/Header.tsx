@@ -17,8 +17,10 @@ const NAV_ITEMS = [
   { to: "/forum", label: "论坛", icon: MessagesSquare },
   { to: "/webnovel", label: "小说", icon: BookOpen },
   { to: "/anime", label: "追番", icon: Tv },
-  { to: "/friends", label: "友链", icon: Link2 },
-  { to: "/sponsors", label: "赞助", icon: Heart },
+  // #180：移动端只保留前 4 个导航 + 工具按钮，友链/赞助折到 md 以上显示，
+  // 否则 390px 宽度下导航溢出、工具按钮被裁出屏外
+  { to: "/friends", label: "友链", icon: Link2, desktopOnly: true },
+  { to: "/sponsors", label: "赞助", icon: Heart, desktopOnly: true },
 ];
 
 export function Header() {
@@ -38,7 +40,8 @@ export function Header() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-        <Link to="/" reloadDocument className="flex items-center gap-2">
+        {/* #185：去掉 reloadDocument，与其余导航一致走 SPA（此前点 logo 整页刷新） */}
+        <Link to="/" className="flex items-center gap-2">
           {SITE_AVATAR ? (
             <img
               src={SITE_AVATAR}
@@ -54,14 +57,14 @@ export function Header() {
         </Link>
 
         <nav className="flex items-center gap-1 text-sm text-muted">
-          {NAV_ITEMS.map(({ to, label, icon: Icon }) => (
+          {NAV_ITEMS.map(({ to, label, icon: Icon, desktopOnly }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
                 `flex items-center gap-1.5 rounded px-2.5 py-1.5 transition-colors hover:text-white ${
                   isActive ? "text-white" : ""
-                }`
+                } ${desktopOnly ? "hidden md:flex" : ""}`
               }
             >
               <Icon className="h-4 w-4" />

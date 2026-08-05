@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { getMyNovels, getWallet, createWalletOrder, getMyOrders, deleteNovel, publishNovel } from '@/lib/webnovel/api';
-import type { Novel } from '@/lib/webnovel/api';
+import { getMyNovels, getWallet, createWalletOrder, getMyOrders, getWalletLedger, deleteNovel, publishNovel, updateNovel } from '@/lib/webnovel/api';
+import type { Novel, WalletLedgerEntry } from '@/lib/webnovel/api';
 
 const RECHARGE_PLANS = [
   { points: 100, amount: 6, label: '6 元 / 100 点' },
@@ -13,14 +13,16 @@ export function NovelMine() {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [points, setPoints] = useState(0);
   const [orders, setOrders] = useState<Record<string, unknown>[]>([]);
+  const [ledger, setLedger] = useState<WalletLedgerEntry[]>([]);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
   const [notLoggedIn, setNotLoggedIn] = useState(false);
 
   const load = useCallback(async () => {
     try { setNovels(await getMyNovels()); } catch { setNotLoggedIn(true); return; }
-    try { setPoints((await getWallet()).points); } catch {}
+    try { setPoints((await getWallet()).balance); } catch {}
     try { setOrders(await getMyOrders()); } catch {}
+    try { setLedger(await getWalletLedger()); } catch {}
   }, []);
 
   useEffect(() => { load(); }, [load]);
@@ -86,6 +88,17 @@ export function NovelMine() {
             ))}
           </div>
         )}
+        {ledger.length > 0 && (
+          <div className="text-xs text-muted-foreground">
+            <p className="mb-1">创作点流水：</p>
+            {ledger.slice(0, 8).map((entry) => (
+              <div key={entry.id} className="flex justify-between gap-3 border-b border-border py-0.5 last:border-0">
+                <span>{entry.kind}</span>
+                <span className={entry.delta_points > 0 ? 'text-emerald-600' : 'text-foreground'}>{entry.delta_points > 0 ? '+' : ''}{entry.delta_points} 点 · 余额 {entry.balance_after}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 作品列表 */}
@@ -103,9 +116,12 @@ export function NovelMine() {
                     {n.status === 'published' ? '已发布' : '草稿'} · ▶ {n.play_count} · ❤ {n.like_count} · {String(n.created_at).slice(0, 10)}
                   </p>
                 </div>
-                <div className="flex gap-2 shrink-0">
-                  <Link to={`/webnovel/editor?slug=${n.slug}`} className="text-xs text-primary hover:underline">编辑</Link>
-                  <Link to={`/webnovel/${n.slug}`} className="text-xs text-muted-foreground hover:underline">查看</Link>
+                  <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                    <Link to={`/webnovel/editor?slug=${n.slug}`} className="text-xs text-primary hover:underline">编辑</Link>
+                    <Link to={`/webnovel/${n.slug}`} className="text-xs text-muted-foreground hover:underline">查看</Link>
+                    <label className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <input type="checkbox" checked={Boolean(n.anonymous)} onChange={async (e) => { try { await updateNovel(n.slug, { anonymous: e.target.checked }); load(); } catch {} }} />匿名
+                    </label>
                   {n.status !== 'published' ? (
                     <button className="text-xs text-muted-foreground hover:underline" onClick={async () => { try { await publishNovel(n.slug, 'published'); load(); } catch {} }}>发布</button>
                   ) : (

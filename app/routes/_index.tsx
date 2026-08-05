@@ -52,7 +52,7 @@ const MODULE_CARDS = [
     to: "/anime",
     icon: Tv,
     title: "追番记录",
-    desc: "同步个人 Bangumi 追番列表，当季在追动漫一览，了解我的二次元喜好。",
+    desc: "当季在追动漫一览，了解我的二次元喜好。",
     action: "查看追番",
   },
 ];
@@ -130,8 +130,8 @@ export default function Index() {
             </Link>
           ))}
 
-          {/* 实用工具集（带标签 chips） */}
-          <div className="group flex flex-col bg-card p-6 transition-colors hover:bg-card-hover">
+          {/* 实用工具集（带标签 chips）——#181：此前是 div 无跳转，hover 样式误导 */}
+          <Link to="/cover" className="group flex flex-col bg-card p-6 transition-colors hover:bg-card-hover">
             <div className="mb-4 flex h-9 w-9 items-center justify-center rounded border border-border bg-background text-muted">
               <Briefcase className="h-4.5 w-4.5" />
             </div>
@@ -152,7 +152,7 @@ export default function Index() {
             <span className="flex items-center gap-1 text-sm text-muted transition-colors group-hover:text-white">
               使用工具 <ArrowRight className="h-4 w-4" />
             </span>
-          </div>
+          </Link>
 
           {/* 友链 & 赞助（双链接） */}
           <div className="group flex flex-col bg-card p-6 transition-colors hover:bg-card-hover">
@@ -210,7 +210,7 @@ export default function Index() {
             <p>
               同时也是一名动漫爱好者，
               <Tv className="mx-1 inline h-4 w-4" />
-              追番记录会在这里同步更新。
+              追番列表会在这里展示。
             </p>
           </div>
         </div>

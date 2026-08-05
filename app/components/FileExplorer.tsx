@@ -156,5 +156,3 @@ export function FileExplorer({ items, baseUrl = "" }: FileExplorerProps) {
     </div>
   );
 }
-
-export { HardDrive };

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Route } from "./+types/tools.convert";
+import { Image as ImageIcon } from "lucide-react";
 
 export function meta() {
   return [
@@ -24,9 +25,19 @@ export default function ConvertTool(_props: Route.ComponentProps) {
 
   const readFile = (file: File | undefined) => {
     if (!file) return;
+    // #183：换图时清空旧预览，避免旧结果与新设置并存误导
+    setPreview(null);
+    setResultSize(null);
+    setFileName(file.name.replace(/\.[^.]+$/, "") || "image");
     const reader = new FileReader();
     reader.onload = () => setSource(String(reader.result));
     reader.readAsDataURL(file);
+  };
+
+  // #183：补齐"拖拽上传"（文案承诺了但此前没有实现）
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    readFile(e.dataTransfer.files?.[0]);
   };
 
   const convert = () => {
@@ -76,8 +87,12 @@ export default function ConvertTool(_props: Route.ComponentProps) {
               <img src={source} alt="原图" className="block max-w-full" />
             </div>
           ) : (
-            <label className="flex h-64 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted transition-colors hover:border-neutral-500 hover:text-white">
-              <span className="mb-2 text-3xl">🖼️</span>
+            <label
+              className="flex h-64 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted transition-colors hover:border-neutral-500 hover:text-white"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={onDrop}
+            >
+              <ImageIcon className="mb-2 h-8 w-8" aria-hidden="true" />
               点击或拖拽上传图片
               <input
                 type="file"

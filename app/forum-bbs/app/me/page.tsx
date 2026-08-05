@@ -76,6 +76,8 @@ function MeContent() {
   const [qqSending, setQqSending] = useState(false);
   const [qqSent, setQqSent] = useState(false);
   const [qqCountdown, setQqCountdown] = useState(0);
+  // #178：QQ 验证码倒计时 interval 引用，卸载时清理
+  const qqTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [qqMsg, setQqMsg] = useState('');
   const [unbinding, setUnbinding] = useState(false);
   // ── 通知偏好 ──
@@ -216,7 +218,8 @@ function MeContent() {
       }
       const p = new URLSearchParams(searchParams.toString());
       p.delete('github_bound');
-      navigate(`/me${p.toString() ? "?" + p.toString() : ""}`, { replace: true });
+      // #172：应跳回 /forum/me（此前写成 /me → 404，绑定成功提示丢失）
+      navigate(`/forum/me${p.toString() ? "?" + p.toString() : ""}`, { replace: true });
     }
   }, [searchParams, navigate]);
 
@@ -398,6 +401,11 @@ function MeContent() {
     { value: 'prefer_not_to_say', label: '不方便透露' },
   ];
 
+  // #178：卸载时清理 QQ 验证码倒计时
+  useEffect(() => () => {
+    if (qqTimerRef.current) clearInterval(qqTimerRef.current);
+  }, []);
+
   return (
     <main className="container mx-auto max-w-4xl px-4 py-8">
       <div className="mb-6">
@@ -491,7 +499,9 @@ function MeContent() {
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <Input type="text" value={qqInput} onChange={(e) => setQqInput(e.target.value.replace(/\D/g, '').slice(0, 11))} maxLength={11} placeholder="输入 QQ 号" disabled={qqSent} className="flex-1" />
-                  <Button variant="outline" size="sm" disabled={!qqInput || qqInput.length < 5 || qqSending || qqCountdown > 0} onClick={async () => { setQqSending(true); setQqMsg(''); try { await sendQQBindCode(qqInput); setQqSent(true); let n = 60; setQqCountdown(n); const iv = setInterval(() => { n--; setQqCountdown(n); if (n <= 0) clearInterval(iv); }, 1000); } catch (e: unknown) { setQqMsg(e instanceof Error ? e.message : '发送失败'); } finally { setQqSending(false); } }}>{qqSending ? '发送中…' : qqCountdown > 0 ? `${qqCountdown}s` : '发送验证码'}</Button>
+                  <Button variant="outline" size="sm" disabled={!qqInput || qqInput.length < 5 || qqSending || qqCountdown > 0} onClick={async () => { setQqSending(true); setQqMsg(''); try { await sendQQBindCode(qqInput); setQqSent(true); let n = 60; setQqCountdown(n); // #178：倒计时 interval 存入 ref，卸载时清理（此前离开页面仍持续 setState）
+                  if (qqTimerRef.current) clearInterval(qqTimerRef.current);
+                  qqTimerRef.current = setInterval(() => { n--; setQqCountdown(n); if (n <= 0 && qqTimerRef.current) { clearInterval(qqTimerRef.current); qqTimerRef.current = null; } }, 1000); } catch (e: unknown) { setQqMsg(e instanceof Error ? e.message : '发送失败'); } finally { setQqSending(false); } }}>{qqSending ? '发送中…' : qqCountdown > 0 ? `${qqCountdown}s` : '发送验证码'}</Button>
                 </div>
                 {qqSent && (
                   <div className="flex gap-2">

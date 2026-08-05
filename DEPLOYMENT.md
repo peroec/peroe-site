@@ -87,9 +87,12 @@ CLOUDFLARE_API_TOKEN=<token> CLOUDFLARE_ACCOUNT_ID=115794fc4320d099fff55b1b91999
 
 - 路由：`/webnovel`（列表）、`/webnovel/:slug`（详情）、`/webnovel/play/:slug`（游玩）、`/webnovel/editor`（创作）、`/webnovel/me`（我的+钱包）
 - 后端：集成在 forum-api（`/api/webnovel/api/*`），**登录态复用论坛**（forum-auth-token）
-- AI 生成：后端配置 AI_OPENAI_* 或 AI_CF_*（见 forum-api DEPLOYMENT.md）
+- AI 生成/修改：后端配置 AI_OPENAI_* 或 AI_CF_*，Queue 执行长任务，SSE 状态流 + 轮询兜底（见 forum-api DEPLOYMENT.md）
 - 充值：爱发电 webhook 全自动（forum-api 侧配置）
-- 前端代码：`app/components/webnovel/`（游玩引擎/列表/详情/编辑器/我的）+ `app/lib/webnovel/`（API/引擎）
+- 计费：创作点账本 + AI 额度预留/实际结算/失败退款，前端显示订单与创作点流水
+- 编辑器：页面/动作/条件/变量/道具/计时器/图片可视化编辑，兼容旧版 narrative/choices JSON
+- 游玩：动作序列、图片、分支、变量、锁定条件、道具背包、倒计时、全屏、本地进度、点赞
+- 前端代码：`app/components/webnovel/`（游玩引擎/列表/详情/编辑器/我的）+ `app/lib/webnovel/`（API/引擎/schema）
 - 本地测试：`pnpm dev` 后浏览器切 dev 环境（论坛标题 → 高级设置 → 开发），数据走本地 8787
 
 ## 5. 验证

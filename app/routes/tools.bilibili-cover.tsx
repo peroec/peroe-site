@@ -3,11 +3,13 @@ import { Form, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/tools.bilibili-cover";
 import { Download, Loader2, Search, Tv } from "lucide-react";
 
+// #185：BiliData 接口此前重复声明了两份（6-11 与 64-69），删除下面这份
 interface BiliData {
   title: string;
   pic: string;
   owner?: { name: string };
   stat?: { view: number };
+  bvid?: string;
 }
 
 interface ActionResult {
@@ -68,21 +70,39 @@ interface BiliData {
   stat?: { view: number };
 }
 
-export default function BiliCoverTool(_props: Route.ComponentProps) {
-  const [input, setInput] = useState("");
+export default function BiliCoverTool(_props: Route.ComponentProps) {  const [input, setInput] = useState("");
   const actionData = useActionData<ActionResult>();
   const navigation = useNavigation();
   const loading = navigation.state !== "idle";
   const data = actionData?.ok ? actionData.data : null;
   const error = actionData && !actionData.ok ? actionData.error : "";
 
-  const download = () => {
+  // #183：真正的"下载"——fetch→blob→a[download]（跨域图片无法用 download 属性直接触发，
+  // 新标签打开只是预览不是下载）
+  const [downloading, setDownloading] = useState(false);
+  const download = async () => {
     if (!data) return;
-    const a = document.createElement("a");
-    a.href = data.pic;
-    a.target = "_blank";
-    a.rel = "noopener noreferrer";
-    a.click();
+    setDownloading(true);
+    try {
+      const res = await fetch(data.pic, { mode: "cors" });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bili-cover-${(data as BiliData).bvid || "download"}.${(blob.type.split("/")[1] || "jpg").replace("jpeg", "jpg")}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      // CORS 受限时兜底：新标签打开
+      const a = document.createElement("a");
+      a.href = data.pic;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.click();
+    }
+    setDownloading(false);
   };
 
   return (

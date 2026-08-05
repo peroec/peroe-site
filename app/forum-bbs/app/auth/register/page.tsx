@@ -5,10 +5,12 @@ import { Button } from '@/forum-bbs/components/ui/button';
 import { Input } from '@/forum-bbs/components/ui/input';
 import { Alert } from '@/forum-bbs/components/ui/alert';
 import { register, getForumConfig } from '@/forum-bbs/lib/forum/api/client';
+import { useForumAuth } from '@/forum-bbs/lib/forum/stores/auth';
 import { PASSWORD_MIN, PASSWORD_MAX, isWeakPassword } from '@/forum-bbs/lib/forum/utils/password-policy';
 
 export default function ForumRegisterPage() {
   const navigate = useNavigate();
+  const { setToken, setUser } = useForumAuth();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,14 +48,22 @@ export default function ForumRegisterPage() {
     setLoading(true);
     setError('');
     try {
-      await register({
+      // #177：后端注册即签发会话（返回 token），此前前端丢弃 token 并引导"等激活邮件"，
+      // 与后端行为矛盾（激活并非强制）。改为直接进站；管理员权限需验证邮箱后生效。
+      const res = await register({
         username,
         email: email.toLowerCase(),
         password,
         turnstileToken: turnstileToken || undefined,
       });
-      // 注册后统一跳登录页并提示查收激活邮件
-      navigate('/forum/auth/login?registered=1');
+      if (res.token) {
+        setToken(res.token);
+        setUser(res.user);
+        navigate('/forum/');
+      } else {
+        // 兼容旧后端：无 token 时仍跳登录页
+        navigate('/forum/auth/login?registered=1');
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '注册失败');
     } finally {

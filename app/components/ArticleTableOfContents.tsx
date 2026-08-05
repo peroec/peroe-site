@@ -98,11 +98,12 @@ export function ArticleTableOfContents({ headings: initialHeadings = [] }: Artic
         </aside>
       </div>
 
-      <details className="fixed bottom-5 right-5 z-30 lg:hidden">
+      {/* #183：移动到左下角，避免与右下角 FloatingActions（z-40 bottom-6 right-6）重叠 */}
+      <details className="fixed bottom-5 left-5 z-30 lg:hidden">
         <summary className="flex h-11 w-11 cursor-pointer list-none items-center justify-center border border-border bg-card text-foreground shadow-lg">
           <List className="h-5 w-5" aria-label="打开文章目录" />
         </summary>
-        <div className="absolute bottom-14 right-0 max-h-[60vh] w-72 overflow-y-auto border border-border bg-background p-4 shadow-xl">
+        <div className="absolute bottom-14 left-0 max-h-[60vh] w-72 overflow-y-auto border border-border bg-background p-4 shadow-xl">
           <h2 className="mb-3 text-sm font-semibold">本页目录</h2>
           {items}
         </div>

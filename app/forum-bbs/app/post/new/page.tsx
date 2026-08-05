@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router';
+import { Turnstile } from '@marsidev/react-turnstile';
 import { Icon } from '@/forum-bbs/components/ui/icon';
 import { Button } from '@/forum-bbs/components/ui/button';
 import {
@@ -14,7 +15,7 @@ import {
 // 编辑器不会在服务端渲染，因此这个 Suspense 边界不会出现在 SSR 输出里
 import { MarkdownEditor } from '../lazy-markdown-editor';
 import { useForumAuth } from '@/forum-bbs/lib/forum/stores/auth';
-import { createPost, getCategories, uploadFile } from '@/forum-bbs/lib/forum/api/client';
+import { createPost, getCategories, uploadFile, getForumConfig } from '@/forum-bbs/lib/forum/api/client';
 import type { ForumCategory } from '@/forum-bbs/lib/forum/types';
 
 export default function ForumNewPostPage() {
@@ -26,12 +27,20 @@ export default function ForumNewPostPage() {
   const [categories, setCategories] = useState<ForumCategory[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // #173：发帖接 Turnstile（此前漏接，后台开启验证码后发帖必失败）
+  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
 
   useEffect(() => {
     getCategories().then(setCategories).catch(() => {
       // B-20：分类加载失败要可见，否则用户不选分类发帖必失败且原因不明
       setError('分类加载失败，请刷新页面重试');
     });
+    getForumConfig().then((config) => {
+      setTurnstileEnabled(!!config.turnstileEnabled);
+      setTurnstileSiteKey(config.turnstileSiteKey || '');
+    }).catch(() => setTurnstileEnabled(false));
   }, []);
 
   if (!user) {
@@ -46,10 +55,13 @@ export default function ForumNewPostPage() {
 
   const handleSubmit = async () => {
     if (!title.trim() || !content.trim()) { setError('标题和内容不能为空'); return; }
+    // #177：不选分类前端直接拦截（后端强制要求，避免无谓往返）
+    if (!categoryId) { setError('请选择分类'); return; }
+    if (turnstileEnabled && !turnstileToken) { setError('验证码尚未加载完成或已过期，请稍后重试'); return; }
     setSubmitting(true);
     setError('');
     try {
-      const post = await createPost({ title: title.trim(), content: content.trim(), categoryId });
+      const post = await createPost({ title: title.trim(), content: content.trim(), categoryId, turnstileToken: turnstileToken || undefined });
       navigate(`/forum/post/${post.id}`);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '发布失败');
@@ -103,6 +115,20 @@ export default function ForumNewPostPage() {
           minHeight={500}
           onUpload={handleImageUpload}
         />
+
+        {turnstileEnabled && (
+          <div className="flex justify-end">
+            {turnstileSiteKey ? (
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onSuccess={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken('')}
+              />
+            ) : (
+              <p className="text-xs text-amber-600">论坛已启用 Turnstile 但未配置站点密钥，请联系管理员。</p>
+            )}
+          </div>
+        )}
 
         <div className="flex gap-2 justify-end">
           <Button onClick={handleSubmit} disabled={submitting}>

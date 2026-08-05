@@ -107,7 +107,7 @@ export default function Friends() {
             className="w-full rounded border border-border bg-card py-2 pl-9 pr-3 text-sm text-foreground placeholder:text-muted-2 focus:border-neutral-500 focus:outline-none"
           />
         </div>
-        <span className="rounded border border-border px-4 py-2 text-sm text-muted">搜索</span>
+        {/* #183：搜索是即时过滤，右侧"搜索"伪按钮误导，删除 */}
       </div>
 
       {isLoading && (

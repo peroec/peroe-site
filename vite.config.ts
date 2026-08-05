@@ -14,5 +14,7 @@ export default defineConfig({
   define: {
     // 构建时间（页脚展示真实部署时间；SSR 与客户端同值，无水合差异）
     __BUILD_TIME__: JSON.stringify(new Date().toLocaleString("zh-CN", { hour12: false })),
+    // 构建年份（页脚版权；#185：此前用 new Date() 实时取，跨年/时钟异常时显示错误年份）
+    __BUILD_YEAR__: JSON.stringify(String(new Date().getFullYear())),
   },
 });

@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import type { Route } from "./+types/tools.watermark";
+import { Image as ImageIcon } from "lucide-react";
 
 export function meta() {
   return [
@@ -125,8 +126,12 @@ export default function WatermarkTool(_props: Route.ComponentProps) {
               <canvas ref={canvasRef} className="block max-w-full" />
             </div>
           ) : (
-            <label className="flex h-72 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted transition-colors hover:border-neutral-500 hover:text-white">
-              <span className="mb-2 text-3xl">🖼️</span>
+            <label
+              className="flex h-72 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted transition-colors hover:border-neutral-500 hover:text-white"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => { e.preventDefault(); readFile(e.dataTransfer.files?.[0], loadSource); }}
+            >
+              <ImageIcon className="mb-2 h-8 w-8" aria-hidden="true" />
               点击或拖拽上传图片
               <input
                 type="file"

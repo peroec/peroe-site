@@ -77,6 +77,8 @@ export interface ForumPostInput {
   title: string;
   categoryId: string;
   content: string;
+  // #173：发帖接 Turnstile（此前漏接，后台开启验证码后发帖必失败）
+  turnstileToken?: string;
 }
 
 export interface ForumConfig {

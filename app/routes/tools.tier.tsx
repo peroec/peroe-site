@@ -411,8 +411,7 @@ export default function TierPage() {
       a.href = url;
       a.download = `${title.trim() || DEFAULT_TITLE}.png`;
       a.click();
-      // 只报张数，不报标题 —— 标题是用户自己写的内容
-          } finally {
+    } finally {
       setExporting(false);
     }
   }, [board, title]);

@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState, useCallback, useRef } from 'react';
+import { useMemo, useEffect, useState, useCallback, useRef, memo } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router';
 import { Icon } from '@/forum-bbs/components/ui/icon';
 import { Button, buttonVariants } from '@/forum-bbs/components/ui/button';
@@ -6,10 +6,11 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/forum-bbs/components/ui/dialog';
 import { useForumAuth } from '@/forum-bbs/lib/forum/stores/auth';
 import {
-  getPost, getComments, getCategories, createComment, deleteComment, likeComment, likePost, pinComment, updatePost, deletePost, deleteAdminPost, uploadFile, buildCommentTree,
+  getPost, getComments, getCategories, createComment, deleteComment, likeComment, likePost, pinComment, updatePost, deletePost, deleteAdminPost, uploadFile, buildCommentTree, getForumConfig,
 } from '@/forum-bbs/lib/forum/api/client';
 import { parseCommentSort, type CommentSort } from '@/forum-bbs/lib/forum/api/map-comment';
 import { useCommentStream, insertComment } from '@/forum-bbs/lib/forum/use-comment-stream';
+import { Turnstile } from '@marsidev/react-turnstile';
 import type { ForumPostDetail, ForumComment, ForumCategory } from '@/forum-bbs/lib/forum/types';
 
 /** 评论可能带服务端渲染好的 html（SSR 首屏），也可能没有（客户端拉取的） */
@@ -32,13 +33,16 @@ import { formatCompactCount } from '@/forum-bbs/lib/format';
 
 // ── Comment Item (recursive) ──
 
-function CommentItem({
-  comment, postId, onRefresh, depth = 0,
+// #175：评论树 memo，防止任一评论点赞/回复/SSE 插入导致全树重渲染（长帖卡顿）
+const CommentItem = memo(function CommentItem({
+  comment, postId, onRefresh, depth = 0, turnstileEnabled = false, turnstileSiteKey = '',
 }: {
   comment: ForumCommentWithHtml;
   postId: string;
   onRefresh: () => void;
   depth: number;
+  turnstileEnabled?: boolean;
+  turnstileSiteKey?: string;
 }) {
   const { user } = useForumAuth();
   // 有服务端 html 的评论不需要渲染器，也就不会触发那 90KB 的下载
@@ -48,6 +52,8 @@ function CommentItem({
   const [submitting, setSubmitting] = useState(false);
   const [liked, setLiked] = useState(comment.liked ?? false);
   const [likeCount, setLikeCount] = useState(comment.likeCount ?? 0);
+  // #173：回复同样接 Turnstile（回复=发评论）
+  const [replyTurnstileToken, setReplyTurnstileToken] = useState('');
 
   const handleLike = useCallback(async () => {
     try {
@@ -72,9 +78,10 @@ function CommentItem({
 
   const handleReply = useCallback(async () => {
     if (!replyText.trim() || !user) return;
+    if (turnstileEnabled && !replyTurnstileToken) { toast.error('验证码尚未加载完成或已过期，请稍后重试'); return; }
     setSubmitting(true);
     try {
-      await createComment(postId, { content: replyText.trim(), parentId: comment.id });
+      await createComment(postId, { content: replyText.trim(), parentId: comment.id, turnstileToken: replyTurnstileToken || undefined });
       setReplyText('');
       setReplying(false);
       onRefresh();
@@ -82,7 +89,7 @@ function CommentItem({
       toast.error('回复失败', { description: e instanceof Error ? e.message : '请稍后再试' });
     }
     setSubmitting(false);
-  }, [replyText, user, postId, comment.id, onRefresh]);
+  }, [replyText, user, postId, comment.id, onRefresh, turnstileEnabled, replyTurnstileToken]);
 
   const handleDelete = useCallback(async () => {
     if (!confirm('确定要删除此评论吗？')) return;
@@ -154,6 +161,13 @@ function CommentItem({
               minHeight={150}
               onUpload={async (file) => uploadFile(file, 'post')}
             />
+            {turnstileEnabled && turnstileSiteKey && (
+              <Turnstile
+                siteKey={turnstileSiteKey}
+                onSuccess={(token) => setReplyTurnstileToken(token)}
+                onExpire={() => setReplyTurnstileToken('')}
+              />
+            )}
             <div className="flex gap-2">
               <Button size="sm" onClick={handleReply} disabled={submitting || !replyText.trim()}>
                 {submitting ? '发布中…' : '发布回复'}
@@ -168,13 +182,13 @@ function CommentItem({
       {comment.replies && comment.replies.length > 0 && (
         <div>
           {comment.replies.map((reply) => (
-            <CommentItem key={reply.id} comment={reply} postId={postId} onRefresh={onRefresh} depth={depth + 1} />
+            <CommentItem key={reply.id} comment={reply} postId={postId} onRefresh={onRefresh} depth={depth + 1} turnstileEnabled={turnstileEnabled} turnstileSiteKey={turnstileSiteKey} />
           ))}
         </div>
       )}
     </div>
   );
-}
+});
 
 // ── Main Component ──
 
@@ -233,6 +247,17 @@ export function PostContent({
   const [commentText, setCommentText] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [commentsLoading, setCommentsLoading] = useState(!initial);
+  // #173：评论/回复接 Turnstile
+  const [turnstileEnabled, setTurnstileEnabled] = useState(false);
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState('');
+  const [turnstileToken, setTurnstileToken] = useState('');
+
+  useEffect(() => {
+    getForumConfig().then((config) => {
+      setTurnstileEnabled(!!config.turnstileEnabled);
+      setTurnstileSiteKey(config.turnstileSiteKey || '');
+    }).catch(() => setTurnstileEnabled(false));
+  }, []);
 
   // 实时评论（SSE）：新评论即时插入，断线重连后重拉一次全量
   useCommentStream(id, {
@@ -391,8 +416,8 @@ export function PostContent({
     didLoadPost.current = true;
     loadPost();
   }, [loadPost]);
-  // 评论首屏来自 loader。匿名访客的 SSR 结果已经完全正确，不必再拉一次；
-  // 已登录用户需要重拉一遍拿每条评论的 liked 状态（服务端拿不到登录态）。
+  // 评论首屏来自 loader。clientLoader 在浏览器带 token 执行，后端已返回每条评论的
+  // liked 状态，登录用户无需再拉一遍（#174：此前重复请求整份评论）。
   //
   // 记的是「手上这份评论对应哪个排序」而不是一个「已加载过」的一次性开关：
   // 之前那个开关一旦为 true 就再也不复位，匿名访客切排序时 effect 虽然重跑却
@@ -403,15 +428,11 @@ export function PostContent({
   useEffect(() => {
     if (loadedSort.current === commentSort) return;
     loadedSort.current = commentSort;
-    // 换排序时 loader 已经按新的 ?csort 取好了整份评论，匿名访客直接用它，
-    // 不必再客户端拉一遍（含空列表——避免首屏对空评论重复请求）
-    if (!localStorage.getItem('forum-auth-token')) {
-      setComments(initialComments ?? []);
-      setCommentsLoading(false);
-      return;
-    }
-    loadComments();
-  }, [commentSort, initialComments, loadComments]);
+    // 换排序时 loader 已经按新的 ?csort 取好了整份评论，直接使用 loader 数据，
+    // 不再客户端重拉（SSE 断线重连走 useCommentStream 的 onReconnect 补拉）
+    setComments(initialComments ?? []);
+    setCommentsLoading(false);
+  }, [commentSort, initialComments]);
 
   // ssrHtml 存在时不需要渲染器；客户端重新拉过帖子后它被清空，才真的要渲染
   const bodyRender = useRenderer(!ssrHtml);
@@ -422,9 +443,10 @@ export function PostContent({
 
   const submitComment = async () => {
     if (!commentText.trim() || !user) return;
+    if (turnstileEnabled && !turnstileToken) { toast.error('验证码尚未加载完成或已过期，请稍后重试'); return; }
     setSubmitting(true);
     try {
-      await createComment(id, { content: commentText.trim() });
+      await createComment(id, { content: commentText.trim(), turnstileToken: turnstileToken || undefined });
       setCommentText('');
       loadComments();
     } catch (e: unknown) {
@@ -588,6 +610,19 @@ export function PostContent({
               minHeight={200}
               onUpload={async (file) => uploadFile(file, 'post')}
             />
+            {turnstileEnabled && (
+              <div className="flex justify-end">
+                {turnstileSiteKey ? (
+                  <Turnstile
+                    siteKey={turnstileSiteKey}
+                    onSuccess={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken('')}
+                  />
+                ) : (
+                  <p className="text-xs text-amber-600">论坛已启用 Turnstile 但未配置站点密钥，请联系管理员。</p>
+                )}
+              </div>
+            )}
             <div className="flex justify-end">
               <Button onClick={submitComment} disabled={submitting || !commentText.trim()} size="sm">
                 {submitting ? '发布中…' : '发表评论'}
@@ -624,7 +659,7 @@ export function PostContent({
         ) : (
           <div className="divide-y">
             {comments.map((c) => (
-              <CommentItem key={c.id} comment={c} postId={id} onRefresh={loadComments} depth={0} />
+              <CommentItem key={c.id} comment={c} postId={id} onRefresh={loadComments} depth={0} turnstileEnabled={turnstileEnabled} turnstileSiteKey={turnstileSiteKey} />
             ))}
           </div>
         )}

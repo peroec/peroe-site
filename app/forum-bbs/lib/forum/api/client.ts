@@ -477,7 +477,12 @@ export function getPost(id: string) {
 export function createPost(body: ForumPostInput) {
   return forumRequest<ForumPostDetail>('/api/posts', {
     method: 'POST',
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      title: body.title,
+      categoryId: body.categoryId,
+      content: body.content,
+      'cf-turnstile-response': body.turnstileToken,
+    }),
   }).then((r) => {
     track('论坛发布', { 类型: '帖子' });
     return r;
@@ -708,6 +713,101 @@ export interface StorageConfigResult {
 
 export function getAdminStorageConfig() {
   return forumRequest<StorageConfigResult>('/api/admin/storage/config');
+}
+
+export interface StorageBucketRecord {
+  id: string;
+  type: string;
+  binding?: string | null;
+  endpoint?: string | null;
+  bucket?: string | null;
+  region?: string | null;
+  force_path_style: boolean;
+  max_bytes: number;
+  enabled: boolean;
+  sort_order: number;
+  has_secret: boolean;
+}
+
+export interface StorageBucketsResult {
+  strategy: string;
+  buckets: StorageBucketRecord[];
+}
+
+export function getAdminStorageBuckets() {
+  return forumRequest<StorageBucketsResult>('/api/admin/storage/buckets');
+}
+
+export function saveAdminStorageBucket(data: Record<string, unknown>) {
+  return forumRequest<{ success: boolean }>('/api/admin/storage/buckets', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteAdminStorageBucket(id: string) {
+  return forumRequest<{ success: boolean }>(`/api/admin/storage/buckets/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  });
+}
+
+export function setAdminStorageStrategy(strategy: string) {
+  return forumRequest<{ success: boolean }>('/api/admin/storage/strategy', {
+    method: 'POST',
+    body: JSON.stringify({ strategy }),
+  });
+}
+
+// ── 交互小说（webnovel）管理 ──
+
+export interface WebnovelOrder {
+  id: string;
+  user_id: number;
+  points: number;
+  amount_cny: number;
+  status: string;
+  out_trade_no?: string;
+  created_at: string;
+  paid_at?: string;
+}
+
+export function getAdminWebnovelOrders() {
+  return forumRequest<WebnovelOrder[]>('/api/webnovel/api/admin/orders');
+}
+
+export function giveWebnovelPoints(userId: number, points: number) {
+  return forumRequest<{ success: boolean; balance: number }>('/api/webnovel/api/admin/wallets/give', {
+    method: 'POST',
+    body: JSON.stringify({ user_id: userId, points }),
+  });
+}
+
+export interface WebnovelMailRecord {
+  id: number;
+  title: string;
+  body: string;
+  amount: number;
+  status: string;
+  max_claims: number;
+  claimed_count: number;
+  created_at: string;
+}
+
+export function getAdminWebnovelMails() {
+  return forumRequest<WebnovelMailRecord[]>('/api/webnovel/api/admin/mails');
+}
+
+export function createAdminWebnovelMail(data: { title: string; body?: string; amount?: number; max_claims?: number }) {
+  return forumRequest<{ success: boolean }>('/api/webnovel/api/admin/mails', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export function deleteAdminWebnovelMail(id: number) {
+  return forumRequest<{ success: boolean }>(`/api/webnovel/api/admin/mails/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 export function getArticleNotificationsCount() {

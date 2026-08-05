@@ -21,7 +21,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       <link>${origin}/posts/${p.slug}</link>
       <guid>${origin}/posts/${p.slug}</guid>
       <description>${escapeXml(p.description || "")}</description>
-      <pubDate>${new Date(p.date.replace(" ", "T")).toUTCString()}</pubDate>
+      <pubDate>${new Date(p.date.replace(/^(\d{4}-\d{2}-\d{2}).*$/, "$1") + "T00:00:00Z").toUTCString()}</pubDate>
     </item>`
     )
     .join("\n");

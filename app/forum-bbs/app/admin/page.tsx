@@ -34,6 +34,19 @@ import {
   saveAdminChannelPolicy,
   getAdminStorageUsage,
   getAdminStorageConfig,
+  getAdminStorageBuckets,
+  saveAdminStorageBucket,
+  deleteAdminStorageBucket,
+  setAdminStorageStrategy,
+  getAdminWebnovelOrders,
+  giveWebnovelPoints,
+  getAdminWebnovelMails,
+  createAdminWebnovelMail,
+  deleteAdminWebnovelMail,
+  type StorageBucketRecord,
+  type StorageBucketsResult,
+  type WebnovelOrder,
+  type WebnovelMailRecord,
   type ChannelPolicy,
   type StorageUsageResult,
   type StorageConfigResult,
@@ -212,12 +225,35 @@ function AnnouncementsSection() {
   const [publishNow, setPublishNow] = useState(false);
   const [saving, setSaving] = useState(false);
   const [publishingId, setPublishingId] = useState<number | null>(null);
+  // #176：公告编辑（此前只有创建/删除，updateAdminAnnouncement 一直是死代码）
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
 
   const load = useCallback(async () => {
     try { setList((await getAdminAnnouncements()) as unknown as AdminAnnouncementRow[]); } catch {}
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const startEdit = (a: AdminAnnouncementRow) => {
+    setEditingId(a.id);
+    setEditTitle(a.title);
+    setEditContent(a.content);
+  };
+
+  const saveEdit = async (id: number) => {
+    if (!editTitle.trim() || !editContent.trim()) { toast.error('标题和内容不能为空'); return; }
+    setEditSaving(true);
+    try {
+      await updateAdminAnnouncement(String(id), { title: editTitle.trim(), content: editContent.trim() });
+      toast.success('公告已更新');
+      setEditingId(null);
+      load();
+    } catch { toast.error('保存失败'); }
+    setEditSaving(false);
+  };
 
   return (
     <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
@@ -256,31 +292,47 @@ function AnnouncementsSection() {
           list.map((a) => (
             <div key={a.id} className="flex flex-wrap items-center justify-between gap-2 border border-border rounded-lg p-3">
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-sm font-medium truncate">{a.title}</span>
-                  {a.is_published
-                    ? <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full shrink-0">已发布</span>
-                    : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full shrink-0">草稿</span>}
-                </div>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">{a.content.slice(0, 60)}</p>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                {!a.is_published && (
-                  <Button size="sm" variant="ghost" disabled={publishingId === a.id} onClick={async () => {
-                    setPublishingId(a.id);
-                    try {
-                      const r = await publishAdminAnnouncement(String(a.id));
-                      toast.success(`已发布并推送给 ${r.pushed ?? 0} 位用户`);
-                      load();
-                    } catch { toast.error('发布失败'); }
-                    setPublishingId(null);
-                  }}>{publishingId === a.id ? '发布中…' : '发布并推送'}</Button>
+                {editingId === a.id ? (
+                  <div className="space-y-2">
+                    <input type="text" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} maxLength={100} className="w-full h-8 px-2 rounded border bg-background text-sm" />
+                    <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} maxLength={5000} rows={2} className="w-full px-2 py-1.5 rounded border bg-background text-sm resize-none" />
+                    <div className="flex gap-2">
+                      <Button size="sm" disabled={editSaving} onClick={() => saveEdit(a.id)}>{editSaving ? '保存中…' : '保存'}</Button>
+                      <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>取消</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium truncate">{a.title}</span>
+                      {a.is_published
+                        ? <span className="text-xs bg-green-500/10 text-green-600 px-2 py-0.5 rounded-full shrink-0">已发布</span>
+                        : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full shrink-0">草稿</span>}
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">{a.content.slice(0, 60)}</p>
+                  </>
                 )}
-                <Button size="sm" variant="ghost" className="text-red-500" onClick={async () => {
-                  if (!confirm(`删除公告「${a.title}」？`)) return;
-                  try { await deleteAdminAnnouncement(String(a.id)); load(); } catch { toast.error('删除失败'); }
-                }}>删除</Button>
               </div>
+              {editingId !== a.id && (
+                <div className="flex gap-1 shrink-0">
+                  <Button size="sm" variant="ghost" onClick={() => startEdit(a)}>编辑</Button>
+                  {!a.is_published && (
+                    <Button size="sm" variant="ghost" disabled={publishingId === a.id} onClick={async () => {
+                      setPublishingId(a.id);
+                      try {
+                        const r = await publishAdminAnnouncement(String(a.id));
+                        toast.success(`已发布并推送给 ${r.pushed ?? 0} 位用户`);
+                        load();
+                      } catch { toast.error('发布失败'); }
+                      setPublishingId(null);
+                    }}>{publishingId === a.id ? '发布中…' : '发布并推送'}</Button>
+                  )}
+                  <Button size="sm" variant="ghost" className="text-red-500" onClick={async () => {
+                    if (!confirm(`删除公告「${a.title}」？`)) return;
+                    try { await deleteAdminAnnouncement(String(a.id)); load(); } catch { toast.error('删除失败'); }
+                  }}>删除</Button>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -355,37 +407,120 @@ function formatBytes(n: number): string {
 
 function StorageSection() {
   const [usage, setUsage] = useState<StorageUsageResult | null>(null);
-  const [config, setConfig] = useState<StorageConfigResult | null>(null);
+  const [data, setData] = useState<StorageBucketsResult | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
+  // 图片上传大小上限（MB），后台可配，后端 webnovel/论坛上传都读这个值
+  const [uploadMaxMb, setUploadMaxMb] = useState('5');
+  const [uploadSaving, setUploadSaving] = useState(false);
+  const [form, setForm] = useState<Record<string, unknown>>({
+    id: '', type: 's3', binding: 'UPLOADS', endpoint: '', bucket: '', region: 'auto',
+    access_key_id: '', secret_access_key: '', max_gb: '10', force_path_style: true,
+    enabled: true, sort_order: 0,
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [u, cfg] = await Promise.all([getAdminStorageUsage(), getAdminStorageConfig()]);
-      setUsage(u); setConfig(cfg);
+      const [u, b, s] = await Promise.all([getAdminStorageUsage(), getAdminStorageBuckets(), getAdminSettings()]);
+      setUsage(u); setData(b);
+      const v = String(s.upload_max_mb ?? '5');
+      if (v && !v.includes('••••')) setUploadMaxMb(v);
     } catch {}
     setLoading(false);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  const strategyLabel = usage?.strategy === 'round-robin' ? '轮询（round-robin）' : '按用量比例（least-used）';
+  const saveUploadLimit = async () => {
+    const mb = Number(uploadMaxMb);
+    if (!Number.isFinite(mb) || mb <= 0 || mb > 50) { toast.error('请输入 1-50 的整数（MB）'); return; }
+    setUploadSaving(true);
+    try {
+      await saveAdminSettings({ upload_max_mb: String(Math.round(mb)) });
+      toast.success('上传大小限制已保存，立即生效');
+    } catch { toast.error('保存失败'); }
+    finally { setUploadSaving(false); }
+  };
+
+  const submit = async () => {
+    if (!String(form.id).trim()) { toast.error('请填写桶 ID'); return; }
+    setSaving(true);
+    try {
+      const gb = Number(form.max_gb) || 0;
+      await saveAdminStorageBucket({
+        ...form,
+        max_bytes: gb > 0 ? Math.round(gb * 1024 * 1024 * 1024) : 0,
+      });
+      toast.success('存储桶已保存');
+      setEditing(null);
+      await load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '保存失败');
+    } finally { setSaving(false); }
+  };
+
+  const startEdit = (b?: StorageBucketRecord) => {
+    if (!b) {
+      setForm({ id: '', type: 's3', binding: 'UPLOADS', endpoint: '', bucket: '', region: 'auto', access_key_id: '', secret_access_key: '', max_gb: '10', force_path_style: true, enabled: true, sort_order: 0 });
+      setEditing('__new__');
+      return;
+    }
+    setForm({
+      id: b.id, type: b.type, binding: b.binding || 'UPLOADS', endpoint: b.endpoint || '', bucket: b.bucket || '',
+      region: b.region || 'auto', access_key_id: '', secret_access_key: '', max_gb: b.max_bytes > 0 ? String(b.max_bytes / (1024 ** 3)) : '0',
+      force_path_style: b.force_path_style, enabled: b.enabled, sort_order: b.sort_order,
+    });
+    setEditing(b.id);
+  };
+
+  const strategyLabel = (data?.strategy || usage?.strategy) === 'round-robin' ? '轮询（round-robin）' : '按用量比例（least-used）';
 
   return (
     <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
-      <h2 className="font-semibold">存储设置（多桶）</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="font-semibold">存储桶管理</h2>
+        <Button size="sm" variant="outline" onClick={() => startEdit()}>+ 添加存储桶</Button>
+      </div>
       <p className="text-xs text-muted-foreground">
-        当前策略：{strategyLabel}。桶配置来自 Worker 环境变量 <code className="px-1 bg-muted">STORAGE_CONFIG</code>（JSON），
-        支持 R2 与第三方 S3 混用；写入时按用量比例/轮询选桶，每桶独立容量上限，超限自动切换。
+        桶配置保存在数据库，后台修改后立即生效。每个桶可单独设置容量上限（0 = 不限制），写满自动切换到下一个桶。
+        R2 桶需要提前在 Cloudflare 创建并绑定到 Worker（binding 名）；S3 桶填写 API 地址和密钥即可。
       </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm">写入策略：</span>
+        <select
+          className="h-8 rounded border bg-background px-2 text-sm"
+          value={data?.strategy || 'least-used'}
+          onChange={async (e) => { await setAdminStorageStrategy(e.target.value); load(); }}
+        >
+          <option value="least-used">按用量比例（least-used）</option>
+          <option value="round-robin">轮询（round-robin）</option>
+        </select>
+        <span className="text-xs text-muted-foreground">当前：{strategyLabel}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm">图片上传大小限制：</span>
+        <input
+          type="number"
+          min={1}
+          max={50}
+          value={uploadMaxMb}
+          onChange={(e) => setUploadMaxMb(e.target.value)}
+          className="h-8 w-24 rounded border bg-background px-2 text-sm"
+        />
+        <span className="text-xs text-muted-foreground">MB（论坛与交互小说上传统一生效）</span>
+        <Button size="sm" variant="outline" disabled={uploadSaving} onClick={saveUploadLimit}>{uploadSaving ? '保存中…' : '保存'}</Button>
+      </div>
+
       {loading ? (
         <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
       ) : (
         <div className="space-y-2">
-          {config?.buckets.map((b) => {
+          {data?.buckets.map((b) => {
             const u = usage?.buckets.find((x) => x.id === b.id);
             const used = u?.usedBytes ?? 0;
-            const max = u?.maxBytes ?? b.maxBytes ?? 0;
+            const max = b.max_bytes || 0;
             const pct = max > 0 ? Math.min(100, (used / max) * 100) : 0;
             return (
               <div key={b.id} className="border border-border rounded-lg p-3 space-y-1.5">
@@ -395,37 +530,307 @@ function StorageSection() {
                     <span className={`text-xs px-2 py-0.5 rounded-full ${b.type === 'r2' ? 'bg-blue-500/10 text-blue-500' : 'bg-green-500/10 text-green-600'}`}>
                       {b.type === 'r2' ? 'R2' : 'S3'}
                     </span>
+                    {!b.enabled && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">已停用</span>}
                   </div>
                   <span className="text-xs text-muted-foreground font-mono">
                     {formatBytes(used)} / {max > 0 ? formatBytes(max) : '∞'}
                   </span>
                 </div>
                 <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-green-500'}`}
-                    style={{ width: `${pct}%` }}
-                  />
+                  <div className={`h-full rounded-full ${pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-500' : 'bg-green-500'}`} style={{ width: `${pct}%` }} />
                 </div>
                 <p className="text-xs text-muted-foreground font-mono truncate">
                   {b.type === 'r2'
                     ? `binding: ${b.binding || 'UPLOADS'}`
                     : `endpoint: ${b.endpoint || '-'} · bucket: ${b.bucket || '-'} · region: ${b.region || '-'}`}
+                  {b.has_secret ? ' · 密钥已配置' : ' · 未配置密钥'}
                 </p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => startEdit(b)}>编辑</Button>
+                  <Button size="sm" variant="ghost" className="text-red-500" onClick={async () => {
+                    if (!confirm(`删除存储桶「${b.id}」？（不会删除桶内已有文件）`)) return;
+                    try { await deleteAdminStorageBucket(b.id); load(); toast.success('已删除'); } catch { toast.error('删除失败'); }
+                  }}>删除</Button>
+                </div>
               </div>
             );
           })}
-          {(!config || config.buckets.length === 0) && (
-            <p className="text-sm text-muted-foreground text-center py-3">未配置存储桶</p>
+          {(!data || data.buckets.length === 0) && (
+            <p className="text-sm text-muted-foreground text-center py-3">尚未配置存储桶，点击右上「+ 添加存储桶」开始</p>
           )}
           <div className="flex gap-2">
             <Button size="sm" variant="outline" onClick={load} disabled={loading}>{loading ? '加载中…' : '刷新用量'}</Button>
           </div>
-          <p className="text-xs text-muted-foreground">
-            配置示例（STORAGE_CONFIG）：
-            <code className="px-1 bg-muted break-all">{'{"strategy":"least-used","buckets":[{"type":"r2","binding":"UPLOADS","maxBytes":10737418240}]}'}</code>
-          </p>
         </div>
       )}
+
+      {editing && (
+        <div className="border border-border rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">{editing === '__new__' ? '添加存储桶' : `编辑存储桶 ${editing}`}</h3>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>关闭</Button>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="text-xs text-muted-foreground">桶 ID（唯一，如 b0 / my-s3）
+              <input className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.id || '')} disabled={editing !== '__new__'} onChange={(e) => setForm({ ...form, id: e.target.value })} placeholder="b0" />
+            </label>
+            <label className="text-xs text-muted-foreground">类型
+              <select className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.type)} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                <option value="s3">S3（第三方，API 地址）</option>
+                <option value="r2">R2（Cloudflare 绑定）</option>
+              </select>
+            </label>
+            {form.type === 'r2' ? (
+              <label className="text-xs text-muted-foreground">R2 binding 名
+                <input className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.binding || '')} onChange={(e) => setForm({ ...form, binding: e.target.value })} placeholder="UPLOADS" />
+              </label>
+            ) : (
+              <>
+                <label className="text-xs text-muted-foreground">API 地址（endpoint）
+                  <input className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.endpoint || '')} onChange={(e) => setForm({ ...form, endpoint: e.target.value })} placeholder="https://s3.example.com" />
+                </label>
+                <label className="text-xs text-muted-foreground">桶名（bucket）
+                  <input className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.bucket || '')} onChange={(e) => setForm({ ...form, bucket: e.target.value })} placeholder="my-bucket" />
+                </label>
+                <label className="text-xs text-muted-foreground">区域（region）
+                  <input className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.region || '')} onChange={(e) => setForm({ ...form, region: e.target.value })} placeholder="auto" />
+                </label>
+                <label className="text-xs text-muted-foreground">Access Key ID {form.access_key_id ? '' : '（留空不修改）'}
+                  <input className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.access_key_id || '')} onChange={(e) => setForm({ ...form, access_key_id: e.target.value })} placeholder="AKIA..." />
+                </label>
+                <label className="text-xs text-muted-foreground">Secret Access Key {form.secret_access_key ? '' : '（留空不修改）'}
+                  <input type="password" className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.secret_access_key || '')} onChange={(e) => setForm({ ...form, secret_access_key: e.target.value })} placeholder="••••••" />
+                </label>
+              </>
+            )}
+            <label className="text-xs text-muted-foreground">容量上限（GB，0 = 不限制）
+              <input type="number" min={0} className="mt-0.5 h-8 w-full rounded border bg-background px-2 text-sm" value={String(form.max_gb ?? '0')} onChange={(e) => setForm({ ...form, max_gb: e.target.value })} />
+            </label>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" className="h-4 w-4" checked={Boolean(form.enabled)} onChange={(e) => setForm({ ...form, enabled: e.target.checked })} />启用
+            </label>
+          </div>
+          <div className="flex gap-2">
+            <Button size="sm" disabled={saving} onClick={submit}>{saving ? '保存中…' : '保存'}</Button>
+            <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>取消</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── AI 与支付（后台可改，DB 优先于环境变量）──
+
+const AI_PAY_KEYS: { key: string; label: string; secret?: boolean; hint?: string }[] = [
+  { key: 'ai_openai_base_url', label: 'OpenAI 兼容 API 地址', hint: '如 https://api.openai.com/v1' },
+  { key: 'ai_openai_api_key', label: 'OpenAI API Key', secret: true },
+  { key: 'ai_openai_model', label: 'OpenAI 模型', hint: '如 gpt-4o-mini' },
+  { key: 'ai_cf_account_id', label: 'Cloudflare 账户 ID（Workers AI 兜底）' },
+  { key: 'ai_cf_api_token', label: 'Cloudflare API Token', secret: true },
+  { key: 'ai_cf_model', label: 'Workers AI 模型', hint: '如 @cf/meta/llama-3.1-8b-instruct' },
+  { key: 'ai_tokens_per_point', label: '计费比例（tokens = 1 创作点）', hint: '默认 200' },
+  { key: 'ai_max_tokens', label: '单次 AI 最大 token 预留', hint: '默认 8000' },
+  { key: 'ifdian_user_id', label: '爱发电 user_id（生成支付链接）' },
+  { key: 'ifdian_webhook_secret', label: '爱发电 webhook 密钥', secret: true, hint: '拼到回调地址 ?secret= 后面' },
+];
+
+function AIPaySection() {
+  const [settings, setSettings] = useState<Record<string, unknown>>({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { setSettings(await getAdminSettings()); } catch {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      // 只提交 AI/支付相关且非空、非打码的字段，避免用空串覆盖已有值
+      const payload = Object.fromEntries(
+        Object.entries(settings)
+          .filter(([k]) => AI_PAY_KEYS.some((f) => f.key === k))
+          .filter(([, v]) => {
+            const s = String(v ?? '').trim();
+            return s !== '' && !s.includes('••••');
+          })
+      );
+      await saveAdminSettings(payload);
+      toast.success('已保存，立即生效');
+      await load();
+    } catch { toast.error('保存失败'); }
+    finally { setSaving(false); }
+  };
+
+  const webhookUrl = `https://<你的后端域名>/api/webnovel/api/wallet/ifdian-callback?secret=<IFDIAN_WEBHOOK_SECRET>`;
+
+  return (
+    <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
+      <h2 className="font-semibold">AI 与支付配置</h2>
+      <p className="text-xs text-muted-foreground">
+        保存在数据库（优先于环境变量），保存后立即生效。密钥字段留空表示不修改；已设置的密钥会打码显示。
+        AI 提供商二选一：OpenAI 兼容优先，Workers AI 兜底。
+      </p>
+      {loading ? (
+        <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div>
+      ) : (
+        <div className="space-y-3">
+          {AI_PAY_KEYS.map((f) => (
+            <div key={f.key} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <span className="text-sm shrink-0 sm:w-64">{f.label}</span>
+              <input
+                type={f.secret ? 'password' : 'text'}
+                className="flex-1 h-8 px-2 rounded border bg-background text-sm"
+                value={String(settings[f.key] ?? '')}
+                placeholder={f.hint || (f.secret ? '••••••（留空不修改）' : '')}
+                onChange={(e) => setSettings((s) => ({ ...s, [f.key]: e.target.value }))}
+              />
+            </div>
+          ))}
+          <Button size="sm" disabled={saving} onClick={save}>{saving ? '保存中…' : '保存配置'}</Button>
+          <div className="text-xs text-muted-foreground space-y-0.5">
+            <p>爱发电 webhook 回调地址（配置到爱发电开发者后台）：</p>
+            <code className="px-1 bg-muted break-all">{webhookUrl}</code>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 交互小说（webnovel）管理 ──
+
+function WebnovelManageSection() {
+  const [orders, setOrders] = useState<WebnovelOrder[]>([]);
+  const [mails, setMails] = useState<WebnovelMailRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  // 赠送创作点
+  const [giveUid, setGiveUid] = useState('');
+  const [givePoints, setGivePoints] = useState('');
+  const [giving, setGiving] = useState(false);
+  // 站内信
+  const [mailForm, setMailForm] = useState({ title: '', body: '', amount: '', max_claims: '' });
+  const [mailSaving, setMailSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [o, m] = await Promise.all([getAdminWebnovelOrders(), getAdminWebnovelMails()]);
+      setOrders(o); setMails(m);
+    } catch {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const give = async () => {
+    const uid = Number(giveUid);
+    const points = Number(givePoints);
+    if (!uid || !Number.isFinite(points) || points <= 0) { toast.error('请填写有效的用户 ID 和创作点数'); return; }
+    setGiving(true);
+    try {
+      const r = await giveWebnovelPoints(uid, points);
+      toast.success(`已赠送 ${points} 点，该用户余额 ${r.balance}`);
+      setGiveUid(''); setGivePoints('');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '赠送失败');
+    } finally { setGiving(false); }
+  };
+
+  const createMail = async () => {
+    if (!mailForm.title.trim()) { toast.error('标题不能为空'); return; }
+    setMailSaving(true);
+    try {
+      await createAdminWebnovelMail({
+        title: mailForm.title.trim(),
+        body: mailForm.body.trim(),
+        amount: Number(mailForm.amount) || 0,
+        max_claims: Number(mailForm.max_claims) || 0,
+      });
+      toast.success('站内信已创建');
+      setMailForm({ title: '', body: '', amount: '', max_claims: '' });
+      load();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : '创建失败');
+    } finally { setMailSaving(false); }
+  };
+
+  const removeMail = async (id: number) => {
+    if (!confirm('删除这条站内信？已领取的用户不受影响。')) return;
+    try { await deleteAdminWebnovelMail(id); load(); toast.success('已删除'); } catch { toast.error('删除失败'); }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="border-y border-border py-5 sm:border sm:p-5 space-y-4">
+        <h2 className="font-semibold">创作点赠送</h2>
+        <p className="text-xs text-muted-foreground">给指定用户直接发放创作点（AI 生成消耗），发放记录写入钱包账本。</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="number" value={giveUid} onChange={(e) => setGiveUid(e.target.value)} placeholder="用户 ID" className="h-9 w-32 rounded border bg-background px-2 text-sm" />
+          <input type="number" value={givePoints} onChange={(e) => setGivePoints(e.target.value)} placeholder="创作点" className="h-9 w-32 rounded border bg-background px-2 text-sm" />
+          <Button size="sm" disabled={giving} onClick={give}>{giving ? '赠送中…' : '赠送'}</Button>
+        </div>
+      </div>
+
+      <div className="border-y border-border py-5 sm:border sm:p-5 space-y-4">
+        <h2 className="font-semibold">站内信管理</h2>
+        <p className="text-xs text-muted-foreground">站内信可附带创作点，用户可在编辑器「站内信」中领取；max_claims=0 表示不限名额。</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <input value={mailForm.title} onChange={(e) => setMailForm({ ...mailForm, title: e.target.value })} placeholder="标题 *（如：上线福利）" className="h-9 rounded border bg-background px-2 text-sm" />
+          <div className="flex gap-2">
+            <input type="number" value={mailForm.amount} onChange={(e) => setMailForm({ ...mailForm, amount: e.target.value })} placeholder="附赠创作点（0=纯通知）" className="h-9 w-1/2 rounded border bg-background px-2 text-sm" />
+            <input type="number" value={mailForm.max_claims} onChange={(e) => setMailForm({ ...mailForm, max_claims: e.target.value })} placeholder="名额（0=不限）" className="h-9 w-1/2 rounded border bg-background px-2 text-sm" />
+          </div>
+          <textarea value={mailForm.body} onChange={(e) => setMailForm({ ...mailForm, body: e.target.value })} rows={2} placeholder="正文" className="rounded border bg-background px-2 py-1.5 text-sm sm:col-span-2" />
+        </div>
+        <Button size="sm" disabled={mailSaving || !mailForm.title.trim()} onClick={createMail}>{mailSaving ? '创建中…' : '创建站内信'}</Button>
+        {loading ? <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-8" />)}</div> : mails.length > 0 && (
+          <div className="space-y-1.5">
+            {mails.map((m) => (
+              <div key={m.id} className="flex items-start justify-between gap-2 border border-border rounded-lg px-3 py-2">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-medium">{m.title}</span>
+                    {m.amount > 0 && <span className="bg-secondary px-1.5 text-[11px]">+{m.amount} 点</span>}
+                    <span className="text-xs text-muted-foreground">已领取 {m.claimed_count}{m.max_claims > 0 ? ` / ${m.max_claims}` : ''} · {String(m.created_at).slice(0, 10)}</span>
+                  </div>
+                  {m.body && <p className="truncate text-xs text-muted-foreground">{m.body}</p>}
+                </div>
+                <button type="button" className="shrink-0 text-xs text-red-500 hover:underline" onClick={() => removeMail(m.id)}>删除</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="border-y border-border py-5 sm:border sm:p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold">充值订单</h2>
+          <Button size="sm" variant="outline" onClick={load} disabled={loading}>{loading ? '加载中…' : '刷新'}</Button>
+        </div>
+        {orders.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-3">暂无订单</p>
+        ) : (
+          <div className="space-y-1.5">
+            {orders.map((o) => (
+              <div key={o.id} className="flex flex-wrap items-center justify-between gap-2 border border-border rounded-lg px-3 py-2 text-sm">
+                <div className="min-w-0">
+                  <p className="font-mono text-xs truncate">{o.id}</p>
+                  <p className="text-xs text-muted-foreground">用户 #{o.user_id} · {o.points} 点 · ¥{o.amount_cny} · {String(o.created_at).slice(0, 16)}</p>
+                </div>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${o.status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                  {o.status === 'paid' ? '已到账' : '待支付'}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -477,7 +882,7 @@ export default function ForumAdminPage() {
    * 只填表单不直接落库 —— 上传完先在旁边的缩略图看一眼，再点「保存」，
    * 免得手滑选错文件直接盖掉用户头像。
    *
-   * uploadFile 内部会先压到 512px / 0.2MB（后端上限 500KB 且按魔数校验，
+   * uploadFile 内部会先压到 128px / 0.03MB 并转 webp（后端上限 500KB 且按魔数校验，
    * 只收 JPEG / PNG / GIF），所以这里不用自己压。
    */
   const uploadAvatarFile = useCallback(async (file: File) => {
@@ -553,11 +958,13 @@ export default function ForumAdminPage() {
   }, [settings, loadSettings]);
 
   useEffect(() => {
+    // #176：未登录/非管理员不发起后台请求（此前无条件执行，401 会把访客硬跳登录页）
+    if (!user || user.role !== 'admin') return;
     loadStats();
     loadSettings();
     loadCategories();
     getArticleNotificationsCount().then((r) => setSubCount(r.count)).catch(() => {});
-  }, [loadStats, loadSettings, loadCategories]);
+  }, [user, loadStats, loadSettings, loadCategories]);
 
   // auth 初始化期间 user 为空：先显示骨架，避免管理员误闪「当前账号不是管理员」
   if (authLoading) {
@@ -594,6 +1001,8 @@ export default function ForumAdminPage() {
     { key: 'announcements', label: '公告管理', icon: 'mdi:bullhorn' },
     { key: 'categories', label: '分类管理', icon: 'mdi:shape-outline' },
     { key: 'storage', label: '存储管理', icon: 'mdi:database' },
+    { key: 'ai-pay', label: 'AI 与支付', icon: 'mdi:robot-outline' },
+    { key: 'webnovel', label: '小说管理', icon: 'mdi:book-open-variant' },
     { key: 'email', label: '邮件测试', icon: 'mdi:email-outline' },
   ];
 
@@ -739,9 +1148,27 @@ export default function ForumAdminPage() {
       {/* S3 GC */}
       <S3GcSection />
 
-      {/* 存储设置（多桶） */}
+      {/* 存储桶管理（多桶） */}
       <StorageSection />
+        </>
+      )}
 
+      {activeTab === 'ai-pay' && (
+        <>
+      {/* AI 与支付 */}
+      <AIPaySection />
+        </>
+      )}
+
+      {activeTab === 'webnovel' && (
+        <>
+      {/* 交互小说管理 */}
+      <WebnovelManageSection />
+        </>
+      )}
+
+      {activeTab === 'email' && (
+        <>
       {/* Email Test */}
       <EmailTestSection />
         </>
@@ -905,7 +1332,7 @@ export default function ForumAdminPage() {
                           />
                         </label>
                         <span className="text-xs text-muted-foreground">
-                          支持 PNG / JPEG / GIF，自动压到 512px 以内
+                          支持 PNG / JPEG / GIF，自动压到 128px 以内（头像）
                         </span>
                       </div>
                     </div>

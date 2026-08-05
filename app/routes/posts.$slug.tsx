@@ -3,10 +3,21 @@ import { useEffect, useState } from "react";
 import type { Route } from "./+types/posts.$slug";
 import { ArrowLeft, CalendarDays, Eye, FilePen } from "lucide-react";
 // 高亮在客户端完成：hljs 随文章页 chunk 加载（懒加载路由），SSR 不执行
-import hljs from "highlight.js/lib/common";
+// #184：不再静态引入 common（全量 40+ 语言 ~60KB gzip），改用 core + 按需注册常用语言
+import hljs from "highlight.js/lib/core";
 import powershell from "highlight.js/lib/languages/powershell";
 import nginx from "highlight.js/lib/languages/nginx";
 import http from "highlight.js/lib/languages/http";
+import bash from "highlight.js/lib/languages/bash";
+import javascript from "highlight.js/lib/languages/javascript";
+import typescript from "highlight.js/lib/languages/typescript";
+import python from "highlight.js/lib/languages/python";
+import json from "highlight.js/lib/languages/json";
+import xml from "highlight.js/lib/languages/xml";
+import css from "highlight.js/lib/languages/css";
+import sql from "highlight.js/lib/languages/sql";
+import markdown from "highlight.js/lib/languages/markdown";
+import plaintext from "highlight.js/lib/languages/plaintext";
 import { renderMarkdown } from "~/lib/markdown";
 import { getPostBySlug } from "~/lib/posts.server";
 import { fetchUmamiPageviews } from "~/lib/umami-views";
@@ -46,9 +57,9 @@ function Article({ html }: { html: string }) {
       const current = document.querySelectorAll<HTMLElement>("[data-article] code[data-highlight]");
       if (current.length === 0) return;
       try {
-        hljs.registerLanguage("powershell", powershell);
-        hljs.registerLanguage("nginx", nginx);
-        hljs.registerLanguage("http", http);
+        for (const [name, lang] of Object.entries({ powershell, nginx, http, bash, javascript, typescript, python, json, xml, css, sql, markdown, plaintext })) {
+          if (!hljs.getLanguage(name)) hljs.registerLanguage(name, lang);
+        }
       } catch (e) {
         console.error("[hljs] registerLanguage failed:", e);
       }
@@ -160,10 +171,12 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
                 <time dateTime={post.date}>{(post.date || "").slice(0, 10)}</time>
               </span>
               <span aria-hidden>·</span>
-              <span className="inline-flex items-center gap-1">
-                <Eye className="h-3 w-3" />
-                {views} 次浏览
-              </span>
+              {views > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  {views} 次浏览
+                </span>
+              )}
               {post.tags?.length > 0 && (
                 <div className="flex gap-1.5">
                   {post.tags.map((tag) => (
@@ -198,7 +211,6 @@ export default function PostDetail({ loaderData }: Route.ComponentProps) {
               本文由 PagesCMS 管理
             </span>
           </div>
-
           <section id="comments" className="mt-10 border-t border-border pt-8">
             <h2 className="mb-6 text-2xl font-semibold text-white">评论</h2>
             <Giscus />

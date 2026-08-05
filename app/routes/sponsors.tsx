@@ -32,7 +32,9 @@ export default function Sponsors() {
           decoding="async"
         />
         <p className="mt-5 text-xs text-muted-2">
-          如果你是要加群，请前往置顶文章，使用爱发电进行赞助。这里只是纯赞助，无收益。
+          如果你是要加群，请前往
+          <a href="/posts" className="text-white underline underline-offset-2 hover:text-white">置顶文章</a>
+          ，使用爱发电进行赞助。这里只是纯赞助，无收益。
         </p>
       </section>
 
