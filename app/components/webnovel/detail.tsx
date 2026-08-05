@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { Play, Heart } from 'lucide-react';
 import { getNovel, getSocial, addLike } from '@/lib/webnovel/api';
 import type { Novel } from '@/lib/webnovel/api';
 
@@ -70,8 +71,8 @@ export function NovelDetail({ slug }: { slug: string }) {
           <h1 className="text-xl font-bold break-words">{novel.title}</h1>
           <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
             <span>{novel.author_name || '匿名'}</span>
-            <span>▶ {social?.play_count ?? novel.play_count}</span>
-            <span>❤ {likeCount}</span>
+            <span className="inline-flex items-center gap-1"><Play className="size-3" />{social?.play_count ?? novel.play_count}</span>
+            <span className="inline-flex items-center gap-1"><Heart className="size-3" />{likeCount}</span>
             {pageCount > 0 && <span>{pageCount} 页</span>}
             <span>{String(novel.created_at).slice(0, 10)}</span>
             {novel.status !== 'published' && (
@@ -89,7 +90,7 @@ export function NovelDetail({ slug }: { slug: string }) {
             to={`/webnovel/play/${slug}`}
             className="inline-flex items-center gap-2 border border-primary bg-primary text-primary-foreground rounded-lg px-5 py-2.5 text-sm hover:opacity-90"
           >
-            ▶ 开始游玩
+            <Play className="size-4" /> 开始游玩
           </Link>
         ) : (
           <button
@@ -97,7 +98,7 @@ export function NovelDetail({ slug }: { slug: string }) {
             disabled
             className="inline-flex items-center gap-2 border border-border rounded-lg px-5 py-2.5 text-sm opacity-50 cursor-not-allowed"
           >
-            ▶ 开始游玩
+            <Play className="size-4" /> 开始游玩
           </button>
         )}
         <p className="text-xs text-muted-foreground mt-2">
@@ -109,7 +110,7 @@ export function NovelDetail({ slug }: { slug: string }) {
           disabled={liking}
           className={`mt-4 inline-flex items-center gap-1.5 border rounded-lg px-3 h-9 text-sm transition-colors disabled:opacity-60 ${liked ? 'border-foreground bg-foreground text-background' : 'border-border hover:border-foreground'}`}
         >
-          {liked ? '♥ 已赞' : '♡ 点赞'} <span className="font-mono">{likeCount}</span>
+          {liked ? <><Heart className="size-4" fill="currentColor" /> 已赞</> : <><Heart className="size-4" /> 点赞</>} <span className="font-mono">{likeCount}</span>
         </button>
         {likeHint && <p className="mt-2 text-xs text-destructive">{likeHint}<Link to="/forum/auth/login" className="ml-1 text-primary underline">去登录</Link></p>}
       </div>

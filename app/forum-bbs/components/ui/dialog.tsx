@@ -3,6 +3,7 @@ import { createPortal } from "react-dom"
 
 import { cn } from "@/forum-bbs/lib/utils"
 import { Button } from "@/forum-bbs/components/ui/button"
+import { Icon } from "@/forum-bbs/components/ui/icon"
 
 interface DialogContextValue {
   open: boolean
@@ -147,7 +148,7 @@ function DialogContent({
             "absolute top-2 right-2 inline-flex size-7 items-center justify-center border border-transparent font-mono text-muted-foreground transition-colors duration-75 outline-none hover:bg-foreground hover:text-background focus-visible:outline-2 focus-visible:outline-ring"
           )}
         >
-          <span aria-hidden="true">✕</span>
+          <Icon icon="mdi:close" className="size-4" aria-hidden="true" />
           <span className="sr-only">Close</span>
         </DialogClose>
       )}

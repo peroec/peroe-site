@@ -72,13 +72,13 @@ export function EnvironmentSwitcher({ type, onClose }: Props) {
           onClick={() => { setEnv('prod'); try { localStorage.setItem(cfg.envKey, 'prod'); localStorage.setItem(cfg.storageKey, cfg.urls.prod); } catch {} setCustomUrl(cfg.urls.prod); }}
           className={`flex-1 px-3 py-1.5 text-xs rounded-lg transition-colors ${env === 'prod' ? 'bg-primary text-primary-foreground hover:bg-foreground hover:text-background' : 'border border-input hover:bg-foreground hover:text-background'}`}
         >
-          生产 {env === 'prod' && '✓'}
+          生产 {env === 'prod' && <Icon icon="mdi:check" className="size-3.5" />}
         </button>
         <button
           onClick={toggleEnv}
           className={`flex-1 px-3 py-1.5 text-xs rounded-lg transition-colors ${env === 'dev' ? 'bg-primary text-primary-foreground hover:bg-foreground hover:text-background' : 'border border-input hover:bg-foreground hover:text-background'}`}
         >
-          开发 {env === 'dev' && '✓'}
+          开发 {env === 'dev' && <Icon icon="mdi:check" className="size-3.5" />}
         </button>
       </div>
 

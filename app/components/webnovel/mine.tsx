@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { Play, Heart } from 'lucide-react';
 import { getMyNovels, getWallet, createWalletOrder, getMyOrders, getWalletLedger, deleteNovel, publishNovel, updateNovel } from '@/lib/webnovel/api';
 import type { Novel, WalletLedgerEntry } from '@/lib/webnovel/api';
 
@@ -113,7 +114,7 @@ export function NovelMine() {
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{n.title}</p>
                   <p className="text-xs text-muted-foreground">
-                    {n.status === 'published' ? '已发布' : '草稿'} · ▶ {n.play_count} · ❤ {n.like_count} · {String(n.created_at).slice(0, 10)}
+                    {n.status === 'published' ? '已发布' : '草稿'} · <Play className="inline size-3" /> {n.play_count} · <Heart className="inline size-3" /> {n.like_count} · {String(n.created_at).slice(0, 10)}
                   </p>
                 </div>
                   <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">

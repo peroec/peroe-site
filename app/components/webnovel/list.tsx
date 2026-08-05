@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { Play, Heart, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getNovels } from '@/lib/webnovel/api';
 import type { Novel } from '@/lib/webnovel/api';
 
@@ -111,8 +112,8 @@ export function NovelList() {
                 </div>
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{n.author_name || '匿名'}</span>
-                  <span>▶ {n.play_count}</span>
-                  <span>❤ {n.like_count}</span>
+                  <span className="inline-flex items-center gap-1"><Play className="size-3" />{n.play_count}</span>
+                  <span className="inline-flex items-center gap-1"><Heart className="size-3" />{n.like_count}</span>
                   <span className="ml-auto">{String(n.created_at).slice(0, 10)}</span>
                 </div>
               </Link>
@@ -127,18 +128,18 @@ export function NovelList() {
             type="button"
             disabled={page <= 1}
             onClick={() => goPage(page - 1)}
-            className="border border-border rounded-lg px-3 py-1.5 disabled:opacity-40 hover:border-foreground disabled:hover:border-border"
+            className="inline-flex items-center gap-1 border border-border rounded-lg px-3 py-1.5 disabled:opacity-40 hover:border-foreground disabled:hover:border-border"
           >
-            ‹ 上一页
+            <ChevronLeft className="size-4" /> 上一页
           </button>
           <span className="text-xs text-muted-foreground">第 {page} / {totalPages} 页 · 共 {total} 部</span>
           <button
             type="button"
             disabled={page >= totalPages}
             onClick={() => goPage(page + 1)}
-            className="border border-border rounded-lg px-3 py-1.5 disabled:opacity-40 hover:border-foreground disabled:hover:border-border"
+            className="inline-flex items-center gap-1 border border-border rounded-lg px-3 py-1.5 disabled:opacity-40 hover:border-foreground disabled:hover:border-border"
           >
-            下一页 ›
+            下一页 <ChevronRight className="size-4" />
           </button>
         </div>
       )}

@@ -561,7 +561,7 @@ function MeContent() {
                               try { await updateNotifyPrefs(patch as any); setPrefsMsg('已保存'); } catch { setPrefsMsg('保存失败'); }
                             }}
                           />
-                          {active && <span>★</span>}
+                          {active && <Icon icon="mdi:star" className="size-3.5 text-amber-500" aria-label="优先渠道" />}
                           {ch === 'email' ? '邮箱' : 'QQ'}
                         </label>
                       );
@@ -614,7 +614,7 @@ function MeContent() {
           <div className="border-y border-border py-5 sm:border sm:p-5 space-y-3">
             <div className="flex items-center gap-2">
               <h2 className="font-semibold">双重验证 (TOTP)</h2>
-              {user.totpEnabled && <span className="text-xs text-green-600 dark:text-green-400">✓ 已启用</span>}
+              {user.totpEnabled && <span className="inline-flex items-center gap-1 text-xs text-green-600 dark:text-green-400"><Icon icon="mdi:check" className="size-3.5" /> 已启用</span>}
             </div>
 
             {user.totpEnabled ? (
@@ -649,7 +649,7 @@ function MeContent() {
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                   {user.githubAvatarUrl && <img src={user.githubAvatarUrl} alt="" className="h-6 w-6 rounded-full shrink-0" />}
                   <span className="truncate max-w-[12rem]">@{(localUser ?? user)?.githubLogin || '已绑定'}</span>
-                  <span className="text-xs text-green-600 shrink-0">✓ 已绑定</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-green-600 shrink-0"><Icon icon="mdi:check" className="size-3.5" /> 已绑定</span>
                 </div>
                 {user.hasPassword === false && (
                   <p className="text-xs text-amber-600">未设置密码，解绑后将无法登录</p>

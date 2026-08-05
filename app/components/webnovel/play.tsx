@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
+import { Backpack, Heart, Lock, ChevronRight, Maximize, Minimize } from 'lucide-react';
 import { addLike, addView, getNovel, getSocial } from '@/lib/webnovel/api';
 import { useNovelEngine } from '@/lib/webnovel/engine';
 
@@ -88,9 +89,9 @@ export function NovelPlay({ slug }: { slug: string }) {
       <div className="mb-4 flex items-center justify-between gap-3 text-sm text-muted-foreground">
         <Link to={`/webnovel/${slug}`} className="inline-flex min-w-0 items-center gap-1 hover:text-foreground">← <span className="truncate">{novel.title}</span></Link>
         <span className="flex shrink-0 items-center gap-3">
-          <button type="button" onClick={() => setInventoryOpen((value) => !value)} className="hover:text-foreground" aria-label="背包" aria-pressed={inventoryOpen}>🎒 {view.inventory.length || ''}</button>
+          <button type="button" onClick={() => setInventoryOpen((value) => !value)} className="inline-flex items-center gap-1 hover:text-foreground" aria-label="背包" aria-pressed={inventoryOpen}><Backpack className="size-4" />{view.inventory.length || ''}</button>
           <span>已探索 {view.visitedCount}/{view.totalPages} 页</span>
-          <button type="button" onClick={toggleFullScreen} className="hover:text-foreground" aria-label={fullScreen ? '退出全屏' : '全屏阅读'}>{fullScreen ? '退出全屏' : '全屏'}</button>
+          <button type="button" onClick={toggleFullScreen} className="hover:text-foreground" aria-label={fullScreen ? '退出全屏' : '全屏阅读'}>{fullScreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}</button>
         </span>
       </div>
 
@@ -122,9 +123,9 @@ export function NovelPlay({ slug }: { slug: string }) {
             ) : view.options.map(({ opt, locked, lockLabel }) => (
               <div key={opt.id}>
                 <button type="button" disabled={locked} onClick={() => handlePick(view.choiceActionId as string, opt.id)} className="w-full border border-border px-3 py-2.5 text-left text-sm hover:border-foreground disabled:cursor-not-allowed disabled:opacity-50">
-                  {locked ? '🔒 ' : '› '}{opt.label}
+                  {locked ? <Lock className="mr-1.5 inline size-3.5" /> : <ChevronRight className="mr-1.5 inline size-3.5" />}{opt.label}
                 </button>
-                {locked && <p className="px-3 pt-0.5 text-xs text-muted-foreground">🔒 {lockLabel}</p>}
+                {locked && <p className="flex items-center gap-1 px-3 pt-0.5 text-xs text-muted-foreground"><Lock className="size-3" />{lockLabel}</p>}
               </div>
             ))}
           </div>
@@ -133,7 +134,7 @@ export function NovelPlay({ slug }: { slug: string }) {
             <p className="py-2 text-center text-sm text-muted-foreground">…</p>
           ) : (
             <div className="flex justify-center">
-              <button type="button" onClick={handleContinue} className="border border-foreground px-6 py-2.5 text-sm hover:bg-foreground hover:text-background">继续 ›</button>
+              <button type="button" onClick={handleContinue} className="inline-flex items-center gap-1 border border-foreground px-6 py-2.5 text-sm hover:bg-foreground hover:text-background">继续 <ChevronRight className="size-4" /></button>
             </div>
           )
         ) : (
@@ -142,7 +143,7 @@ export function NovelPlay({ slug }: { slug: string }) {
             <p className="border-y border-border py-3 text-center text-sm tracking-widest text-muted-foreground">—— 剧终 ——</p>
             <div className="flex justify-center">
               <button type="button" onClick={like} className="inline-flex items-center gap-1.5 border border-border px-4 py-2 text-sm hover:border-foreground disabled:opacity-60" disabled={liked}>
-                {liked ? '♥ 已赞' : '♡ 点赞'} <span className="font-mono">{likes}</span>
+                {liked ? <Heart className="size-4" fill="currentColor" /> : <Heart className="size-4" />} {liked ? '已赞' : '点赞'} <span className="font-mono">{likes}</span>
               </button>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-2">

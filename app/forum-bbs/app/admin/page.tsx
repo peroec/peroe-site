@@ -189,7 +189,7 @@ function EmailTestSection() {
         <div className="text-xs text-muted-foreground space-y-1 max-h-32 overflow-y-auto">
           {results.map((r, i) => {
             const opt = TEMPLATE_OPTIONS.find((t) => t.value === r.template);
-            return <div key={i}>{opt?.label || String(r.template)}: {r.success ? '✓' : '✗'} {String(r.message || r.error || '')}</div>;
+            return <div key={i}>{opt?.label || String(r.template)}: {r.success ? <Icon icon="mdi:check" className="inline size-3.5 text-green-600" /> : <Icon icon="mdi:close" className="inline size-3.5 text-red-500" />} {String(r.message || r.error || '')}</div>;
           })}
         </div>
       )}
