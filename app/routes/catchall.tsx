@@ -1,4 +1,4 @@
-import { Link } from "react-router";
+import { Link, isRouteErrorResponse } from "react-router";
 import type { Route } from "./+types/catchall";
 
 export function meta() {
@@ -14,13 +14,17 @@ export function loader(_: Route.LoaderArgs) {
 // ErrorBoundary（英文 "Not Found"），这里精心做的 404 设计从未显示。
 // 导出 ErrorBoundary 接管 404 渲染。
 export function ErrorBoundary({ error }: { error: unknown }) {
-  const is404 = error instanceof Response && error.status === 404;
+  // 用 isRouteErrorResponse 判定（loader throw 的 Response 经 React Router 包装后
+  // 不是原生 Response 实例，instanceof 判定会失败——#182 实测踩坑）
+  const is404 = isRouteErrorResponse(error) && error.status === 404;
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-col items-center px-4 py-28 text-center">
       <p className="text-6xl font-bold text-neutral-800">404</p>
       <h1 className="mt-4 text-xl font-bold text-white">{is404 ? "页面不存在" : "出错了"}</h1>
       {!is404 && (
-        <p className="mt-2 text-sm text-muted">{error instanceof Error ? error.message : String(error)}</p>
+        <p className="mt-2 text-sm text-muted">
+          {error instanceof Error ? error.message : isRouteErrorResponse(error) ? String(error.statusText || error.status) : ""}
+        </p>
       )}
       <Link
         to="/"
