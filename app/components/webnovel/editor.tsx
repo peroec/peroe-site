@@ -29,6 +29,24 @@ const STATUS_META: Record<string, { label: string; cls: string }> = {
 
 function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 
+/** 重命名/删除页面时，同步更新条件表达式里 visited 的页面引用（可嵌套 and/or/not） */
+function patchConditionPage(condition: NovelCondition | undefined, from: string, to: string | undefined): NovelCondition | undefined {
+  if (!condition) return undefined;
+  if (condition.op === 'visited') {
+    if (condition.page === from) return to === undefined ? undefined : { ...condition, page: to };
+    return condition;
+  }
+  if (condition.op === 'and' || condition.op === 'or') {
+    const items = (condition.items || []).map((item) => patchConditionPage(item, from, to)).filter((item): item is NovelCondition => Boolean(item));
+    return items.length === 0 ? undefined : { ...condition, items };
+  }
+  if (condition.op === 'not') {
+    const item = patchConditionPage(condition.item, from, to);
+    return item ? { ...condition, item } : undefined;
+  }
+  return condition;
+}
+
 function conditionToBuilder(condition: NovelCondition | undefined): { combine: 'and' | 'or'; clauses: Array<{ kind: 'visited' | 'var'; page?: string; variable?: string; compare?: NovelCondition['compare']; value?: boolean | number | string }> } {
   if (!condition) return { combine: 'and', clauses: [] };
   if (condition.op === 'and' || condition.op === 'or') {
@@ -95,12 +113,19 @@ function PageSidebar({ source, selected, onSelect, onChange }: { source: NovelSo
   const rename = (id: string) => {
     const next = name.trim() || id;
     if (next === id) { setRenaming(null); return; }
-    onChange({ ...source, startPage: source.startPage === id ? next : source.startPage, pages: source.pages.map((page) => ({ ...page, id: page.id === id ? next : page.id, actions: page.actions.map((action) => action.type === 'goto' && action.target === id ? { ...action, target: next } : action.type === 'choice' ? { ...action, options: (action.options || []).map((option) => option.goto === id ? { ...option, goto: next } : option) } : action) })) });
+    const patchOption = (option: NovelOption): NovelOption => {
+      let n = option.goto === id ? { ...option, goto: next } : option;
+      const visible = patchConditionPage(n.visible, id, next);
+      const locked = patchConditionPage(n.locked, id, next);
+      if (visible !== n.visible || locked !== n.locked) n = { ...n, visible, locked };
+      return n;
+    };
+    onChange({ ...source, startPage: source.startPage === id ? next : source.startPage, pages: source.pages.map((page) => ({ ...page, id: page.id === id ? next : page.id, actions: page.actions.map((action) => action.type === 'goto' && action.target === id ? { ...action, target: next } : action.type === 'choice' ? { ...action, options: (action.options || []).map(patchOption) } : action) })) });
     onSelect(next); setRenaming(null);
   };
   const addPage = () => { const id = `page-${crypto.randomUUID().slice(0, 8)}`; onChange({ ...source, pages: [...source.pages, { id, title: '', actions: [] }] }); onSelect(id); };
   const duplicate = (page: NovelPage) => { const id = `${page.id}-copy-${crypto.randomUUID().slice(0, 6)}`; onChange({ ...source, pages: [...source.pages, { ...clone(page), id, actions: page.actions.map((action) => ({ ...clone(action), id: `${action.id}-copy-${crypto.randomUUID().slice(0, 5)}` })) }] }); onSelect(id); };
-  const remove = (id: string) => { if (source.pages.length <= 1) return; const pages = source.pages.filter((page) => page.id !== id).map((page) => ({ ...page, actions: page.actions.map((action) => action.type === 'goto' && action.target === id ? { ...action, target: '' } : action.type === 'choice' ? { ...action, options: (action.options || []).map((option) => option.goto === id ? { ...option, goto: undefined } : option) } : action) })); onChange({ ...source, startPage: source.startPage === id ? pages[0].id : source.startPage, pages }); if (selected === id) onSelect(pages[0].id); };
+  const remove = (id: string) => { if (source.pages.length <= 1) return; const patchOption = (option: NovelOption): NovelOption => { let n = option.goto === id ? { ...option, goto: undefined } : option; const visible = patchConditionPage(n.visible, id, undefined); const locked = patchConditionPage(n.locked, id, undefined); if (visible !== n.visible || locked !== n.locked) n = { ...n, visible, locked }; return n; }; const pages = source.pages.filter((page) => page.id !== id).map((page) => ({ ...page, actions: page.actions.map((action) => action.type === 'goto' && action.target === id ? { ...action, target: '' } : action.type === 'choice' ? { ...action, options: (action.options || []).map(patchOption) } : action) })); onChange({ ...source, startPage: source.startPage === id ? pages[0].id : source.startPage, pages }); if (selected === id) onSelect(pages[0].id); };
   return <aside className="md:mr-3 md:border-r md:border-border md:pr-3"><div className="mb-2 flex items-center justify-between"><h3 className="text-sm font-semibold">页面（{source.pages.length}）</h3><button type="button" className="border border-border px-2 py-1 text-xs" onClick={addPage}>+ 新页</button></div><ul className="space-y-1">{source.pages.map((page) => <li key={page.id} className={`border ${selected === page.id ? 'border-foreground' : 'border-border'}`}>{renaming === page.id ? <div className="flex gap-1 p-1"><input autoFocus className="h-7 min-w-0 flex-1 border border-border bg-background px-1 text-xs" value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && rename(page.id)} /><button type="button" aria-label="确认改名" onClick={() => rename(page.id)}><Check className="size-3.5" /></button></div> : <div className="flex items-center gap-1 px-2 py-1.5"><button type="button" className="min-w-0 flex-1 truncate text-left text-xs" onClick={() => onSelect(page.id)}>{page.title || page.id}</button>{page.id === source.startPage && <span className="text-[10px]">start</span>}<button type="button" className="text-xs" aria-label={`重命名 ${page.id}`} onClick={() => { setRenaming(page.id); setName(page.id); }}><Pencil className="size-3" /></button><button type="button" className="text-xs" aria-label={`复制 ${page.id}`} onClick={() => duplicate(page)}><Copy className="size-3" /></button>{page.id !== source.startPage && <button type="button" className="text-muted-foreground hover:text-foreground" aria-label={`删除 ${page.id}`} onClick={() => remove(page.id)}><X className="size-3" /></button>}</div>}</li>)}</ul><p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">页面名为 start 的页面是起始页，选项和跳转都会指向页面名。</p></aside>;
 }
 

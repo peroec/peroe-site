@@ -234,14 +234,21 @@ export function normalizeImportedNovel(raw: unknown): ImportedNovel {
 
   const startPage = validPageIds.has(String(sourceInput.startPage)) ? String(sourceInput.startPage) : pages[0]?.id || 'start';
   if (sourceInput.startPage !== startPage) warnings.push(`startPage 不存在，已改为「${startPage}」`);
-  const variables: NovelVariable[] = Array.isArray(sourceInput.variables) ? sourceInput.variables.map((variable: any): NovelVariable => ({
-    name: String(variable?.name || importId('variable', new Set())),
-    type: variable?.type === 'bool' || variable?.type === 'string' ? variable.type : 'number',
-    initial: variable?.initial ?? (variable?.type === 'bool' ? false : variable?.type === 'string' ? '' : 0),
-    kind: variable?.kind === 'item' ? 'item' : 'flag',
-    label: variable?.label,
-    description: variable?.description,
-  })) : [];
+  const usedVariableNames = new Set<string>();
+  const variables: NovelVariable[] = Array.isArray(sourceInput.variables) ? sourceInput.variables.map((variable: any, index: number): NovelVariable => {
+    const raw = typeof variable?.name === 'string' ? variable.name.trim() : '';
+    const name = raw && !usedVariableNames.has(raw) ? (usedVariableNames.add(raw), raw) : importId('variable', usedVariableNames);
+    if (!raw) warnings.push(`第 ${index + 1} 个变量缺少 name，已生成 ${name}`);
+    else if (raw !== name) warnings.push(`变量名「${raw}」重复，已改为 ${name}`);
+    return {
+      name,
+      type: variable?.type === 'bool' || variable?.type === 'string' ? variable.type : 'number',
+      initial: variable?.initial ?? (variable?.type === 'bool' ? false : variable?.type === 'string' ? '' : 0),
+      kind: variable?.kind === 'item' ? 'item' : 'flag',
+      label: variable?.label,
+      description: variable?.description,
+    };
+  }) : [];
   if (!pages.length) warnings.push('没有页面，已使用空白开始页');
   return {
     title: String(input.title || '未命名作品'),
@@ -252,25 +259,98 @@ export function normalizeImportedNovel(raw: unknown): ImportedNovel {
   };
 }
 
+/** 递归收集条件表达式里引用的变量名 */
+function collectConditionVars(condition: NovelCondition | undefined, out: Set<string> = new Set()): Set<string> {
+  if (!condition) return out;
+  if (condition.op === 'var' && condition.variable) out.add(condition.variable);
+  if (condition.items) for (const item of condition.items) collectConditionVars(item, out);
+  if (condition.item) collectConditionVars(condition.item, out);
+  return out;
+}
+
+/**
+ * 可玩性体检（与 format 页「导入前的体检」11 项保持一致）。
+ * 不拦导入，只把问题列给用户。
+ */
 export function auditNovelSource(source: NovelSource): string[] {
   const issues: string[] = [];
-  const pages = new Set(source.pages.map((page) => page.id));
-  if (!source.pages.length) issues.push('没有页面');
-  if (!pages.has(source.startPage)) issues.push(`起始页「${source.startPage}」不存在`);
+  const pages = source.pages;
+  const pageSet = new Set(pages.map((page) => page.id));
+  if (!pages.length) return ['没有页面'];
+  if (!pageSet.has(source.startPage)) issues.push(`起始页「${source.startPage}」不存在`);
   const variables = new Map(source.variables.map((variable) => [variable.name, variable]));
-  for (const page of source.pages) {
-    const exits = page.actions.filter((action) => action.type === 'choice' || action.type === 'goto' || action.type === 'end');
-    if (!exits.length) issues.push(`页面「${page.title || page.id}」没有出口`);
+  const assignedVars = new Set<string>();
+  const exitsOf = new Map<string, string[]>();
+
+  for (const page of pages) {
+    const title = page.title?.trim();
+    if (!title || title === page.id) issues.push(`NO_TITLE：页面「${page.id}」缺中文 title`);
+    const choices = page.actions.filter((action) => action.type === 'choice');
+    const hasGoto = page.actions.some((action) => action.type === 'goto' && action.target);
+    const hasEnd = page.actions.some((action) => action.type === 'end');
+    if (!choices.length && !hasGoto && !hasEnd) issues.push(`NO_EXIT：页面「${page.id}」没有出口`);
+    const targets: string[] = [];
     for (const action of page.actions) {
-      if (action.type === 'goto' && action.target && !pages.has(action.target)) issues.push(`页面「${page.id}」跳转到不存在的「${action.target}」`);
+      if (action.type === 'goto' && action.target) {
+        targets.push(action.target);
+        if (!pageSet.has(action.target)) issues.push(`页面「${page.id}」跳转到不存在的「${action.target}」`);
+      }
+      if (action.type === 'set' && action.variable) {
+        assignedVars.add(action.variable);
+        if (!variables.has(action.variable)) issues.push(`UNDECLARED_VAR：set 引用未声明的变量「${action.variable}」`);
+      }
       if (action.type !== 'choice') continue;
       for (const option of action.options || []) {
-        if (option.goto && !pages.has(option.goto)) issues.push(`选项「${option.label}」跳转到不存在的「${option.goto}」`);
+        if (option.goto) {
+          targets.push(option.goto);
+          if (!pageSet.has(option.goto)) issues.push(`选项「${option.label}」跳转到不存在的「${option.goto}」`);
+        }
         for (const condition of [option.visible, option.locked]) {
-          if (condition?.op === 'var' && condition.variable && !variables.has(condition.variable)) issues.push(`条件引用了不存在的变量「${condition.variable}」`);
+          if (!condition) continue;
+          for (const name of collectConditionVars(condition)) {
+            const variable = variables.get(name);
+            if (!variable) issues.push(`UNDECLARED_VAR：条件引用了未声明的变量「${name}」`);
+            else if (variable.kind === 'flag') issues.push(`INVISIBLE_GATE_STATE：门槛条件引用了隐藏变量「${name}」，应改为 kind:"item" 道具`);
+          }
+          for (const cond of collectVisitedPages(condition)) {
+            if (!pageSet.has(cond)) issues.push(`条件 visited 引用了不存在的页面「${cond}」`);
+          }
+        }
+        for (const action of option.actions || []) {
+          if (action.type === 'set' && action.variable) {
+            assignedVars.add(action.variable);
+            if (!variables.has(action.variable)) issues.push(`UNDECLARED_VAR：set 引用未声明的变量「${action.variable}」`);
+          }
         }
       }
     }
+    exitsOf.set(page.id, targets);
+    if (choices.length && !hasGoto && !hasEnd) {
+      const allConditional = choices.every((action) => (action.options || []).length > 0 && (action.options || []).every((option) => option.visible || option.locked));
+      if (allConditional) issues.push(`ALL_CONDITIONAL：页面「${page.id}」所有选项都带条件，条件不满足时无路可走`);
+    }
   }
+  for (const [name, variable] of variables) {
+    if (!assignedVars.has(name)) issues.push(`NEVER_ASSIGNED：变量「${name}」从未被任何 set 赋值`);
+    if (variable.kind === 'item' && !variable.label?.trim()) issues.push(`ITEM_NO_LABEL：道具「${name}」缺 label，背包里会显示英文标识`);
+  }
+  const reachable = new Set<string>();
+  const queue = [source.startPage];
+  while (queue.length) {
+    const id = queue.shift() as string;
+    if (reachable.has(id)) continue;
+    reachable.add(id);
+    for (const target of exitsOf.get(id) || []) if (pageSet.has(target)) queue.push(target);
+  }
+  for (const page of pages) if (!reachable.has(page.id)) issues.push(`UNREACHABLE：页面「${page.id}」从起点不可达`);
   return [...new Set(issues)];
+}
+
+/** 递归收集条件表达式里 visited 引用的页面 id */
+function collectVisitedPages(condition: NovelCondition | undefined, out: string[] = []): string[] {
+  if (!condition) return out;
+  if (condition.op === 'visited' && condition.page) out.push(condition.page);
+  if (condition.items) for (const item of condition.items) collectVisitedPages(item, out);
+  if (condition.item) collectVisitedPages(condition.item, out);
+  return out;
 }
