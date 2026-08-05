@@ -41,6 +41,7 @@ export interface AiJob {
   error?: string;
   result?: any;
   prompt?: string;
+  progress?: string;
   title?: string;
   slug?: string;
   created_at: string;

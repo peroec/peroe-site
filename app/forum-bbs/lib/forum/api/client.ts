@@ -775,6 +775,13 @@ export function getAdminWebnovelOrders() {
   return forumRequest<WebnovelOrder[]>('/api/webnovel/api/admin/orders');
 }
 
+/** 订单手动确认（webhook 自动确认的兜底） */
+export function confirmAdminWebnovelOrder(id: string) {
+  return forumRequest<{ success: boolean; balance: number }>(`/api/webnovel/api/admin/orders/${encodeURIComponent(id)}/confirm`, {
+    method: 'POST',
+  });
+}
+
 export function giveWebnovelPoints(userId: number, points: number) {
   return forumRequest<{ success: boolean; balance: number }>('/api/webnovel/api/admin/wallets/give', {
     method: 'POST',

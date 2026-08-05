@@ -417,6 +417,10 @@ export function NovelEditor() {
                     {job.status === 'done' && job.title && <b className="ml-1.5">《{job.title}》</b>}
                     {job.status === 'done' && <span className="ml-1.5 font-mono text-muted-foreground">{job.tokens} tokens · 扣 {job.cost}</span>}
                     <p className="truncate text-muted-foreground">{job.prompt}</p>
+                    {/* 实时模型输出（流式生成时落库的 progress） */}
+                    {job.status === 'pending' && job.progress && (
+                      <p className="mt-1 line-clamp-2 font-mono text-[11px] text-muted-foreground/80 whitespace-pre-wrap break-all">{job.progress}</p>
+                    )}
                   </div>
                   {job.status === 'done' && job.slug && (
                     <Link to={`/webnovel/play/${job.slug}`} target="_blank" rel="noreferrer" className="shrink-0 border border-border px-1.5 py-0.5 hover:border-foreground">预览</Link>

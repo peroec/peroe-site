@@ -39,6 +39,7 @@ import {
   deleteAdminStorageBucket,
   setAdminStorageStrategy,
   getAdminWebnovelOrders,
+  confirmAdminWebnovelOrder,
   giveWebnovelPoints,
   getAdminWebnovelMails,
   createAdminWebnovelMail,
@@ -55,6 +56,8 @@ import {
   type ChannelPolicy,
   type StorageUsageResult,
   type StorageConfigResult,
+  getBaseUrl,
+  FORUM_API_BASE_URLS,
 } from '@/forum-bbs/lib/forum/api/client';
 import { toast } from 'sonner';
 import type { AdminStats } from '@/forum-bbs/lib/forum/types';
@@ -672,7 +675,13 @@ function AIPaySection() {
     finally { setSaving(false); }
   };
 
-  const webhookUrl = `https://<你的后端域名>/api/webnovel/api/wallet/ifdian-callback?secret=<IFDIAN_WEBHOOK_SECRET>`;
+  // 真实后端域名（论坛 API 基地址），不再是占位符；密钥与上方输入框联动
+  const base = (() => { try { return getBaseUrl().replace(/\/+$/, ''); } catch { return FORUM_API_BASE_URLS.prod; } })();
+  const secretVal = String(settings.ifdian_webhook_secret ?? '').trim();
+  const webhookPath = `${base}/api/webnovel/api/wallet/ifdian-callback`;
+  const webhookUrl = secretVal && !secretVal.includes('••••')
+    ? `${webhookPath}?secret=${encodeURIComponent(secretVal)}`
+    : `${webhookPath}?secret=<上方填写的密钥>`;
 
   return (
     <div className="border-y border-border py-5 sm:border sm:p-5 mb-6 space-y-4">
@@ -698,9 +707,11 @@ function AIPaySection() {
             </div>
           ))}
           <Button size="sm" disabled={saving} onClick={save}>{saving ? '保存中…' : '保存配置'}</Button>
-          <div className="text-xs text-muted-foreground space-y-0.5">
-            <p>爱发电 webhook 回调地址（配置到爱发电开发者后台）：</p>
-            <code className="px-1 bg-muted break-all">{webhookUrl}</code>
+          <div className="text-xs text-muted-foreground space-y-1">
+            <p>爱发电 webhook 回调地址（配置到爱发电开发者后台，密钥换成上方「爱发电 webhook 密钥」实际值）：</p>
+            {/* 白底可读样式（此前灰底 + 占位符，字体被遮挡且看不到真实域名） */}
+            <code className="block rounded border border-border bg-background px-2 py-1.5 break-all text-foreground select-all">{webhookUrl}</code>
+            {!secretVal && <p className="text-amber-600 dark:text-amber-400">提示：先在上方填写并保存「爱发电 webhook 密钥」，地址会带上真实密钥。</p>}
           </div>
         </div>
       )}
@@ -828,9 +839,21 @@ function WebnovelManageSection() {
                   <p className="font-mono text-xs truncate">{o.id}</p>
                   <p className="text-xs text-muted-foreground">用户 #{o.user_id} · {o.points} 点 · ¥{o.amount_cny} · {String(o.created_at).slice(0, 16)}</p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${o.status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
-                  {o.status === 'paid' ? '已到账' : '待支付'}
-                </span>
+                <div className="flex items-center gap-2 shrink-0">
+                  {o.status === 'pending' && (
+                    <Button size="sm" variant="ghost" className="text-primary" onClick={async () => {
+                      if (!confirm(`确认用户 #${o.user_id} 已线下支付「${o.points} 点 / ¥${o.amount_cny}」？确认后自动到账。`)) return;
+                      try {
+                        const r = await confirmAdminWebnovelOrder(o.id);
+                        toast.success(`已手动确认，用户余额 ${r.balance}`);
+                        load();
+                      } catch (e) { toast.error(e instanceof Error ? e.message : '确认失败'); }
+                    }}>手动确认</Button>
+                  )}
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${o.status === 'paid' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                    {o.status === 'paid' ? '已到账' : '待支付'}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
