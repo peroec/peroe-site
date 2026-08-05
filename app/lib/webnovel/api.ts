@@ -1,6 +1,6 @@
 /**
  * 交互小说 API 客户端。
- * 复用论坛登录态（forum-auth-token），基地址与论坛一致（forum.060730.xyz / 本地 8787）。
+ * 复用论坛登录态（forum-auth-token），基地址与论坛一致（getBaseUrl / 本地 8787）。
  */
 import { getBaseUrl } from '@/forum-bbs/lib/forum/api/client';
 import type { NovelCondition, NovelAction, NovelSource } from './schema';

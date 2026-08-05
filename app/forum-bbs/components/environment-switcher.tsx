@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Icon } from '@/forum-bbs/components/ui/icon';
 import { Button } from '@/forum-bbs/components/ui/button';
+import { siteConfig } from '@/forum-bbs/lib/site-config';
 
 const CONFIG = {
   draw: {
@@ -15,7 +16,8 @@ const CONFIG = {
     storageKey: 'forum-api-base-url',
     envKey: 'forum-api-env',
     label: '论坛',
-    urls: { prod: 'https://forum.060730.xyz', dev: 'http://127.0.0.1:8787' },
+    // 生产地址由 VITE_FORUM_API_BASE 或 site.config.json 的 forumApiBase 提供，不再硬编码
+    urls: { prod: import.meta.env.VITE_FORUM_API_BASE || siteConfig.forumApiBase, dev: 'http://127.0.0.1:8787' },
   },
 };
 

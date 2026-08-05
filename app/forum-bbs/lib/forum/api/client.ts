@@ -19,6 +19,7 @@ export type { ChannelPolicy };
 import { track } from '@/forum-bbs/lib/track';
 import { withBase } from '@/forum-bbs/lib/base-path';
 import { stripBase } from '@/forum-bbs/lib/seo/route-meta';
+import { siteConfig } from '@/forum-bbs/lib/site-config';
 import { type RawPost, mapPost } from './map-post';
 import { type RawComment, mapComment, getCommentSortParams } from './map-comment';
 // buildCommentTree 历史上从这里导出，消费方沿用该路径
@@ -27,7 +28,8 @@ export { buildCommentTree } from './map-comment';
 export type ForumApiEnv = 'prod' | 'dev';
 
 export const FORUM_API_BASE_URLS: Record<ForumApiEnv, string> = {
-  prod: import.meta.env.VITE_FORUM_API_BASE || 'https://forum.060730.xyz',
+  // VITE_FORUM_API_BASE（构建期环境变量）优先，兜底读 site.config.json 的 forumApiBase
+  prod: import.meta.env.VITE_FORUM_API_BASE || siteConfig.forumApiBase,
   dev: 'http://127.0.0.1:8787',
 };
 

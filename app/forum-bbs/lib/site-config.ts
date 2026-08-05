@@ -11,6 +11,8 @@ export const siteConfig = {
   slogan: rawConfig.siteSlogan,
   avatar: rawConfig.siteAvatar,
   url: rawConfig.forumSiteUrl,
+  /** 论坛 API 回源地址（site.config.json 配置，VITE_FORUM_API_BASE 环境变量可覆盖） */
+  forumApiBase: rawConfig.forumApiBase,
   ogImage: "",
   keywords: [rawConfig.siteName, "论坛", "社区"],
   analytics: rawConfig.analytics,
