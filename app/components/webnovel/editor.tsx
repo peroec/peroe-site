@@ -7,8 +7,8 @@ import {
 import type { Novel, WalletInfo, WalletMail, AiJob } from '@/lib/webnovel/api';
 import type { NovelAction, NovelCondition, NovelOption, NovelPage, NovelSource, NovelVariable } from '@/lib/webnovel/schema';
 import { createAction } from '@/lib/webnovel/engine';
-import { Sparkles, Wrench, Check, Pencil, Copy, X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
-import { createStarterSource, normalizeSource } from '@/lib/webnovel/schema';
+import { Sparkles, Wrench, Check, Pencil, Copy, X, Plus, ChevronUp, ChevronDown, Download } from 'lucide-react';
+import { auditNovelSource, createStarterSource, normalizeImportedNovel, normalizeSource } from '@/lib/webnovel/schema';
 
 const ACTION_LABELS: Record<NovelAction['type'], string> = {
   image: '图片', say: '文字', timer: '计时', choice: '分支', goto: '跳转', set: '设置变量', end: '结束',
@@ -155,6 +155,8 @@ export function NovelEditor() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [importOpen, setImportOpen] = useState(true);
+  const [importText, setImportText] = useState('');
 
   // 新建作品
   const [newForm, setNewForm] = useState({ title: '', slug: '', description: '', tags: '' });
@@ -323,6 +325,47 @@ export function NovelEditor() {
 
   const upload = async (file: File) => uploadNovelImage(file);
 
+  const importDraft = async (raw: string) => {
+    setError(''); setMessage('');
+    try {
+      const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)```/i);
+      const body = fenced ? fenced[1] : raw;
+      const start = body.indexOf('{');
+      const end = body.lastIndexOf('}');
+      if (start < 0 || end <= start) throw new Error('没有找到 JSON 内容');
+      const imported = normalizeImportedNovel(JSON.parse(body.slice(start, end + 1)));
+      const issues = auditNovelSource(imported.source);
+      const novel = await createNovel({ title: imported.title, description: imported.description, tags: imported.tags, content: imported.source });
+      setImportText(''); setImportOpen(false);
+      await loadNovels();
+      setEditSlug(novel.slug);
+      const notes = [...imported.warnings, ...(issues.length ? [`体检提示：${issues.join('；')}`] : [])];
+      setMessage(notes.length ? `已导入《${novel.title}》；${notes.join('；')}` : `《${novel.title}》已导入为草稿。`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '导入失败，请检查 JSON');
+    }
+  };
+
+  const importFile = async (file: File) => {
+    try { await importDraft(await file.text()); } catch { setError('文件读取失败'); }
+  };
+
+  const exportNovel = (novel: Novel) => {
+    const data = {
+      title: novel.title,
+      description: novel.description || '',
+      tags: novel.tags || [],
+      source: normalizeSource(novel.content || novel.source),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${novel.slug}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const lowBalance = wallet ? (wallet.balance ?? 0) < (wallet.min_balance ?? 20) : false;
 
   // 充值走订单流程（createWalletOrder → 爱发电支付链接），而不是拼一个无效 URL
@@ -436,6 +479,20 @@ export function NovelEditor() {
         )}
       </section>
 
+      <section className="mb-6 border-y border-border py-5">
+        <details open={importOpen} onToggle={(event) => setImportOpen(event.currentTarget.open)}>
+          <summary className="cursor-pointer select-none text-base font-semibold">导入 JSON（用你自己的 AI 生成）</summary>
+          <p className="mt-2 text-sm text-muted-foreground">去<Link to="/webnovel/format" className="mx-1 underline hover:text-foreground">格式与提示词</Link>页复制提示词，喂给任意大模型，再把它输出的 JSON 贴到这里 —— 不消耗创作点。允许带 markdown 代码块和模型的客套话，会自动抠出 JSON。</p>
+          <form className="mt-3" onSubmit={(event) => { event.preventDefault(); void importDraft(importText); }}>
+            <textarea className="w-full border border-border bg-background px-3 py-2 font-mono text-xs" rows={6} placeholder="粘贴 AI 输出的 JSON，或从下面选择 .json 文件…" aria-label="要导入的 JSON" value={importText} onChange={(event) => setImportText(event.target.value)} />
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <button type="submit" className="border border-primary bg-primary px-2.5 py-1.5 text-xs text-primary-foreground disabled:opacity-50" disabled={!importText.trim()}>导入为草稿</button>
+              <label className="inline-flex cursor-pointer items-center gap-1.5 border border-border px-2.5 py-1.5 text-xs hover:border-foreground"><Download className="size-3.5" />选择 .json 文件<input type="file" accept=".json,application/json" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void importFile(file); event.target.value = ''; }} /></label>
+            </div>
+          </form>
+        </details>
+      </section>
+
       {/* ── 新建作品 ── */}
       <section className="mb-6 border-y border-border py-5">
         <h2 className="mb-3 text-base font-semibold">新建作品</h2>
@@ -489,6 +546,7 @@ export function NovelEditor() {
                       {novel.status === 'published' && <Link to={`/webnovel/${novel.slug}`} className="border border-border px-2 py-1 text-xs hover:border-foreground">查看</Link>}
                       <Link to={`/webnovel/play/${novel.slug}`} target="_blank" rel="noreferrer" className="border border-border px-2 py-1 text-xs hover:border-foreground">预览</Link>
                       <button type="button" className="border border-border bg-secondary px-2 py-1 text-xs" onClick={() => { if (editingThis) { setEditing(null); setEditSlug(null); } else { setBusySlug(novel.slug); getNovel(novel.slug).then((n) => { setEditing(loadSession(n)); setEditSlug(novel.slug); }).catch(() => setError('加载失败')).finally(() => setBusySlug(null)); } }}>{editingThis ? '收起' : '编辑'}</button>
+                      <button type="button" className="border border-border px-2 py-1 text-xs hover:border-foreground" title="下载作品 JSON" onClick={() => exportNovel(novel)}>导出</button>
                       <label className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         <input type="checkbox" checked={Boolean(novel.anonymous)} disabled={busySlug === novel.slug} onChange={(e) => setAnonymous(novel.slug, e.target.checked)} />匿名
                       </label>

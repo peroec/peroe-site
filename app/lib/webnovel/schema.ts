@@ -158,3 +158,119 @@ export function defaultVariableValue(variable: NovelVariable): boolean | number 
   if (variable.type === 'number') return 0;
   return '';
 }
+
+export interface ImportedNovel {
+  title: string;
+  description: string;
+  tags: string[];
+  source: NovelSource;
+  warnings: string[];
+}
+
+function importId(prefix: string, used: Set<string>): string {
+  let id = `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+  while (used.has(id)) id = `${prefix}-${Math.random().toString(36).slice(2, 8)}`;
+  used.add(id);
+  return id;
+}
+
+/**
+ * 规范化外部 JSON。线上格式使用 source，历史格式使用 content，二者都接受。
+ * 导入不阻断：缺失 id、重复 id、悬空跳转会被修正，并返回体检提示。
+ */
+export function normalizeImportedNovel(raw: unknown): ImportedNovel {
+  const input = raw && typeof raw === 'object' ? raw as Record<string, any> : {};
+  const sourceInput = (input.source || input.content || input) as Partial<NovelSource>;
+  const warnings: string[] = [];
+  const usedPageIds = new Set<string>();
+  const rawPages = Array.isArray(sourceInput.pages) ? sourceInput.pages : [];
+  const pageIds = rawPages.map((page, index) => {
+    const original = typeof page?.id === 'string' && page.id.trim() ? page.id.trim() : '';
+    const id = original && !usedPageIds.has(original) ? (usedPageIds.add(original), original) : importId('page', usedPageIds);
+    if (!original) warnings.push(`第 ${index + 1} 页缺少 id，已生成 ${id}`);
+    else if (original !== id) warnings.push(`页面 id「${original}」重复，已改为 ${id}`);
+    return id;
+  });
+  const validPageIds = new Set(pageIds);
+  const usedActionIds = new Set<string>();
+  const usedOptionIds = new Set<string>();
+  const danglingTargets: Array<{ pageIndex: number; actionIndex: number; optionIndex?: number }> = [];
+  const pages: NovelPage[] = rawPages.map((rawPage: any, pageIndex) => {
+    const pageId = pageIds[pageIndex];
+    const rawActions = Array.isArray(rawPage?.actions) ? rawPage.actions : [];
+    const actions: NovelAction[] = rawActions.map((rawAction: any, actionIndex: number) => {
+      const actionId = typeof rawAction?.id === 'string' && rawAction.id.trim() && !usedActionIds.has(rawAction.id)
+        ? (usedActionIds.add(rawAction.id), rawAction.id)
+        : importId('a', usedActionIds);
+      if (!rawAction?.id) warnings.push(`页面 ${pageId} 的第 ${actionIndex + 1} 个动作缺少 id，已生成 ${actionId}`);
+      const action = { ...rawAction, id: actionId } as NovelAction;
+      if (action.type === 'goto') {
+        if (!validPageIds.has(action.target || '')) danglingTargets.push({ pageIndex, actionIndex });
+      } else if (action.type === 'choice') {
+        action.options = (Array.isArray(action.options) ? action.options : []).map((rawOption: any, optionIndex) => {
+          const optionId = typeof rawOption?.id === 'string' && rawOption.id.trim() && !usedOptionIds.has(rawOption.id)
+            ? (usedOptionIds.add(rawOption.id), rawOption.id)
+            : importId('o', usedOptionIds);
+          if (!rawOption?.id) warnings.push(`页面 ${pageId} 的第 ${optionIndex + 1} 个选项缺少 id，已生成 ${optionId}`);
+          if (rawOption?.goto && !validPageIds.has(rawOption.goto)) danglingTargets.push({ pageIndex, actionIndex, optionIndex });
+          return { ...rawOption, id: optionId };
+        });
+      }
+      return action;
+    });
+    return { ...rawPage, id: pageId, title: rawPage?.title || pageId, actions };
+  });
+
+  if (danglingTargets.length) {
+    const endId = importId('import_end', usedPageIds);
+    pages.push({ id: endId, title: '导入修复后的结局', actions: [{ id: importId('a', usedActionIds), type: 'end' }] });
+    for (const target of danglingTargets) {
+      const action = pages[target.pageIndex].actions[target.actionIndex];
+      if (target.optionIndex === undefined) (action as NovelAction & { target?: string }).target = endId;
+      else if (action.type === 'choice') action.options![target.optionIndex].goto = endId;
+    }
+    warnings.push(`发现 ${danglingTargets.length} 个悬空跳转，已统一指向「${endId}」`);
+  }
+
+  const startPage = validPageIds.has(String(sourceInput.startPage)) ? String(sourceInput.startPage) : pages[0]?.id || 'start';
+  if (sourceInput.startPage !== startPage) warnings.push(`startPage 不存在，已改为「${startPage}」`);
+  const variables: NovelVariable[] = Array.isArray(sourceInput.variables) ? sourceInput.variables.map((variable: any): NovelVariable => ({
+    name: String(variable?.name || importId('variable', new Set())),
+    type: variable?.type === 'bool' || variable?.type === 'string' ? variable.type : 'number',
+    initial: variable?.initial ?? (variable?.type === 'bool' ? false : variable?.type === 'string' ? '' : 0),
+    kind: variable?.kind === 'item' ? 'item' : 'flag',
+    label: variable?.label,
+    description: variable?.description,
+  })) : [];
+  if (!pages.length) warnings.push('没有页面，已使用空白开始页');
+  return {
+    title: String(input.title || '未命名作品'),
+    description: String(input.description || ''),
+    tags: Array.isArray(input.tags) ? input.tags.map(String).filter(Boolean).slice(0, 12) : [],
+    source: pages.length ? { startPage, variables, pages } : createStarterSource(),
+    warnings,
+  };
+}
+
+export function auditNovelSource(source: NovelSource): string[] {
+  const issues: string[] = [];
+  const pages = new Set(source.pages.map((page) => page.id));
+  if (!source.pages.length) issues.push('没有页面');
+  if (!pages.has(source.startPage)) issues.push(`起始页「${source.startPage}」不存在`);
+  const variables = new Map(source.variables.map((variable) => [variable.name, variable]));
+  for (const page of source.pages) {
+    const exits = page.actions.filter((action) => action.type === 'choice' || action.type === 'goto' || action.type === 'end');
+    if (!exits.length) issues.push(`页面「${page.title || page.id}」没有出口`);
+    for (const action of page.actions) {
+      if (action.type === 'goto' && action.target && !pages.has(action.target)) issues.push(`页面「${page.id}」跳转到不存在的「${action.target}」`);
+      if (action.type !== 'choice') continue;
+      for (const option of action.options || []) {
+        if (option.goto && !pages.has(option.goto)) issues.push(`选项「${option.label}」跳转到不存在的「${option.goto}」`);
+        for (const condition of [option.visible, option.locked]) {
+          if (condition?.op === 'var' && condition.variable && !variables.has(condition.variable)) issues.push(`条件引用了不存在的变量「${condition.variable}」`);
+        }
+      }
+    }
+  }
+  return [...new Set(issues)];
+}
