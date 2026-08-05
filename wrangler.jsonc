@@ -1,7 +1,7 @@
 {
   // 大前端主站（React Router 8 全站 SSR）
   // Worker 名不允许下划线；与仓库名不一致是正常的
-  "name": "peroe-main",
+  "name": "peroe-site",
   "main": "./workers/app.ts",
   "compatibility_date": "2026-08-02",
   "compatibility_flags": ["nodejs_compat"],
@@ -20,6 +20,6 @@
   },
   "vars": {
     // 论坛后端回源地址（SSR 端直调；构建/运行时可用环境变量覆盖）
-    "FORUM_API_BASE": "https://forum.060730.xyz"
+    "FORUM_API_BASE": "https://peroe-api.peroe.top"
   }
 }

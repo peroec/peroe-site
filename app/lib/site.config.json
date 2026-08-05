@@ -12,7 +12,7 @@
   "//门户": "门户站域名（hub，各子站返回主页指向这里）",
   "homeUrl": "https://hub.060730.xyz",
   "//论坛后端": "论坛 API 回源地址（peroe-api Worker 的域名）",
-  "forumApiBase": "https://forum.060730.xyz",
+  "forumApiBase": "https://peroe-api.peroe.top",
   "//论坛前端": "论坛独立部署地址（当前存留的 bbs 站，SEO canonical 用）",
   "forumSiteUrl": "https://bbs.060730.xyz",
   "//文件服务": "工具箱文件下载的索引服务（raw-files 类静态 JSON 目录树）",
