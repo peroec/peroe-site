@@ -369,6 +369,7 @@ export function NovelEditor() {
   };
 
   const lowBalance = wallet ? (wallet.balance ?? 0) < (wallet.min_balance ?? 20) : false;
+  const liveJob = jobs.find((job) => job.status === 'pending');
 
   // 充值走订单流程（createWalletOrder → 爱发电支付链接），而不是拼一个无效 URL
   const [recharging, setRecharging] = useState(false);
@@ -409,6 +410,14 @@ export function NovelEditor() {
             <button type="button" className={`border px-2 py-0.5 hover:border-foreground ${(mails?.unclaimed_count ?? 0) > 0 ? 'border-foreground' : 'border-border'}`} onClick={() => setMailsOpen((v) => !v)}>站内信{(mails?.unclaimed_count ?? 0) > 0 ? `（${mails?.unclaimed_count ?? 0}）` : ''}</button>
           </div>
         </div>
+
+        {/* 模型输出（实时）：进行中任务放最上面独立展示，与「创作任务」列表同级 */}
+        {liveJob && (
+          <div className="mb-3 border border-border p-3">
+            <div className="mb-1 text-[11px] text-muted-foreground">模型输出（实时）</div>
+            <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-foreground/90">{liveJob.progress || '等待模型输出…'}</pre>
+          </div>
+        )}
 
         {mailsOpen && (
           <div className="mb-3 space-y-1 border border-border p-2">
@@ -466,12 +475,6 @@ export function NovelEditor() {
                     {job.status === 'done' && job.title && <b className="ml-1.5">《{job.title}》</b>}
                     {job.status === 'done' && <span className="ml-1.5 font-mono text-muted-foreground">{job.tokens} tokens · 扣 {job.cost}</span>}
                     <p className="truncate text-muted-foreground">{job.prompt}</p>
-                    {job.status === 'pending' && (
-                      <p className="mt-1 font-mono text-[11px] text-muted-foreground/80">
-                        <span className="text-foreground">模型输出（实时）：</span>
-                        {job.progress ? <span className="whitespace-pre-wrap break-all">{job.progress}</span> : <span className="text-muted-foreground/50">等待模型输出…</span>}
-                      </p>
-                    )}
                     {job.status === 'done' && job.result && (
                       <details className="mt-1 border-t border-border pt-1">
                         <summary className="cursor-pointer select-none text-[11px] text-muted-foreground">查看模型最终回传</summary>
