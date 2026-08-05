@@ -421,6 +421,30 @@ function MeContent() {
         <div className="border-y border-border py-5 sm:border sm:p-5 space-y-4">
           <h2 className="font-semibold text-lg">基础资料</h2>
 
+          {/* 用户 ID：供联系开发者 / 赠送创作点时使用 */}
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5">
+            <Icon icon="mdi:account-badge-outline" className="size-5 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">用户 ID（联系开发者 / 接收赠送时提供）</p>
+              <p className="font-mono text-sm text-foreground">#{localUser?.id ?? user?.id ?? '—'}</p>
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="ml-auto shrink-0"
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(String(localUser?.id ?? user?.id ?? ''));
+                  setSaveMsg('用户 ID 已复制');
+                  setSaveOk(true);
+                } catch { setSaveMsg('复制失败，请手动选中复制'); setSaveOk(false); }
+              }}
+            >
+              复制
+            </Button>
+          </div>
+
           <div>
             <label className="text-sm text-muted-foreground block mb-1">头像</label>
             <div className="flex items-center gap-3">
